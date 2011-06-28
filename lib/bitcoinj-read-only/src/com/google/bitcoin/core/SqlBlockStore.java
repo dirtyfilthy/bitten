@@ -64,9 +64,9 @@ public class SqlBlockStore implements BlockStore {
 	private int height;
 
 	private static final String INSERT_BLOCK_SQL="INSERT INTO blocks (hash, height, work, version, prev_block_hash, merkle_root, time, bits, nonce) VALUES (?,?,?,?,?,?,?,?,?);";
-	private static final String INSERT_TRANSACTION_SQL="INSERT INTO transactions (hash, block_id, 'index', version, tx_out_count, tx_in_count, locktime) VALUES (?,?,?,?,?,?,?);";
+	private static final String INSERT_TRANSACTION_SQL="INSERT INTO transactions (hash, block_id, 'index', version, tx_out_count, tx_in_count, locktime, is_coinbase) VALUES (?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_INPUT_SQL="INSERT INTO transaction_inputs(transaction_id, 'index', previous_output_id, previous_output_hash, previous_output_index, script_length, script, sequence, is_coinbase, from_address_id) VALUES (?,?,?,?,?,?,?,?,?,?);";
-	private static final String INSERT_TRANSACTION_OUTPUT_SQL="INSERT INTO transaction_outputs(transaction_id, 'index', value, script_length, script,to_address_id) VALUES (?,?,?,?,?,?);";
+	private static final String INSERT_TRANSACTION_OUTPUT_SQL="INSERT INTO transaction_outputs(transaction_id, 'index', value, script_length, script,to_address_id,is_coinbase) VALUES (?,?,?,?,?,?,?);";
 	private static final String FIND_TRANSACTION_OUTPUT_SQL="SELECT transaction_outputs.id FROM transaction_outputs JOIN transactions ON transaction_id=transactions.id WHERE transactions.hash=? AND transaction_outputs.'index'=? LIMIT 1";
 	private static final String FIND_TRANSACTIONS_BY_BLOCK_ID_SQL="SELECT transactions.* FROM transactions WHERE transactions.block_id=? ORDER BY 'index';";
 	private static final String FIND_TRANSACTION_INPUTS_BY_TRANSACTION_ID_SQL="SELECT transaction_inputs.* FROM transaction_inputs WHERE transaction_inputs.transaction_id=? ORDER BY 'index';";
@@ -256,6 +256,10 @@ public class SqlBlockStore implements BlockStore {
 		try {
 			int index=0;
 			for(Transaction t : transactions){
+				int isCoinbase=0;
+				if(t.inputs.size()>0 && t.inputs.get(0).isCoinBase()){
+					isCoinbase=1;
+				}
 				insertTransactionStatement.setString(1,HexBin.encode(t.getHash().hash));
 				insertTransactionStatement.setLong(2,blockId);
 				insertTransactionStatement.setInt(3, index);
@@ -263,6 +267,7 @@ public class SqlBlockStore implements BlockStore {
 				insertTransactionStatement.setLong(5, t.outputs.size());
 				insertTransactionStatement.setLong(6, t.inputs.size());
 		        insertTransactionStatement.setLong(7, t.lockTime);
+		        insertTransactionStatement.setLong(8, isCoinbase);
 		        insertTransactionStatement.execute();
 		        generatedKeys = insertBlockStatement.getGeneratedKeys();
 				generatedKeys.next();
@@ -317,7 +322,9 @@ public class SqlBlockStore implements BlockStore {
 						e.printStackTrace();
 						insertTransactionOutputStatement.setNull(6,java.sql.Types.INTEGER);
 					}
+					insertTransactionStatement.setInt(7, isCoinbase);
 					insertTransactionOutputStatement.execute();
+					
 					outputindex++;
 				} 
 				index++;  
@@ -410,11 +417,11 @@ public class SqlBlockStore implements BlockStore {
 		Statement s=sqliteDatabase.createStatement();
 		s.execute("CREATE TABLE blocks(id INTEGER NOT NULL PRIMARY KEY, hash VARCHAR, height INTEGER, work VARCHAR, version INTEGER, prev_block_hash VARCHAR, merkle_root VARCHAR, time INTEGER, bits INTEGER, nonce INTEGER);");
 		s.execute("CREATE INDEX blocks_hash_idx ON blocks (hash);");
-		s.execute("CREATE TABLE transactions(id INTEGER NOT NULL PRIMARY KEY, hash VARCHAR, block_id INTEGER, 'index' INTEGER, version INTEGER, tx_out_count INTEGER, tx_in_count INTEGER, locktime INTEGER);");
+		s.execute("CREATE TABLE transactions(id INTEGER NOT NULL PRIMARY KEY, hash VARCHAR, block_id INTEGER, 'index' INTEGER, version INTEGER, tx_out_count INTEGER, tx_in_count INTEGER, locktime INTEGER, is_coinbase INTEGER);");
 		s.execute("CREATE INDEX transactions_block_id_idx ON transactions (block_id);");
 		s.execute("CREATE TABLE transaction_inputs(id INTEGER NOT NULL PRIMARY KEY, transaction_id INTEGER, 'index' INTEGER, previous_output_id INTEGER, previous_output_hash VARCHAR, previous_output_index INTEGER, script_length INTEGER, script VARCHAR, sequence INTEGER, is_coinbase INTEGER, from_address_id INTEGER);");
 		s.execute("CREATE INDEX transaction_inputs_transaction_id_idx ON transaction_inputs (transaction_id);");
-		s.execute("CREATE TABLE transaction_outputs(id INTEGER NOT NULL PRIMARY KEY, transaction_id INTEGER, 'index' INTEGER, value INTEGER, script_length INTEGER, script VARCHAR, to_address_id INTEGER);");
+		s.execute("CREATE TABLE transaction_outputs(id INTEGER NOT NULL PRIMARY KEY, transaction_id INTEGER, 'index' INTEGER, value INTEGER, script_length INTEGER, script VARCHAR, to_address_id INTEGER, is_coinbase INTEGER);");
 		s.execute("CREATE INDEX transaction_outputs_transaction_id_idx ON transaction_outputs (transaction_id);");
 		s.execute("CREATE TABLE chain_head(block_id INTEGER);");
 		s.execute("CREATE TABLE addresses (id INTEGER NOT NULL PRIMARY KEY, base58hash VARCHAR UNIQUE);");
