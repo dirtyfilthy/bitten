@@ -82,9 +82,13 @@ public class Bitten {
 	     {
 	     public void run()
 	     {
-	    	 int i=2;
-	      while(true){
-	    	  t.loadTransaction(i);
+	    	 int min=50000;
+	    	 int max=50010;
+	    	 int i=min;
+	      while(i<max){
+	    	  Long[] a=new Long[1];
+	    	  a[0]=new Long(i);
+	    	  t.loadTransaction(a);
 	    	  i++;
 	    	  try {
 				Thread.sleep(100);
@@ -98,7 +102,7 @@ public class Bitten {
 	     new Thread(r).start();
 		// frame.getContentPane().add(t, BorderLayout.CENTER);
 		downloader=new BlockChainDownloader(blockChain);
-	    downloader.start();
+	    //downloader.start();
 	}
 
 }

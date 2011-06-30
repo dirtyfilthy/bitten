@@ -75,7 +75,7 @@ public class SqlBlockStore implements BlockStore {
 	private static final String FIND_BLOCK_BY_CHAIN_HEAD_SQL="SELECT blocks.* FROM chain_head LEFT JOIN blocks ON chain_head.block_id=blocks.id WHERE blocks.id IS NOT NULL LIMIT 1";
 	private static final String UPDATE_CHAIN_HEAD_SQL="UPDATE chain_head SET block_id=?";
 	private static final String INSERT_ADDRESS_SQL="INSERT INTO addresses (base58hash) VALUES (?)";
-	private static final String FIND_ADDRESS_BY_HASH_SQL="SELECT * FROM addresses WHERE base58hash=?";
+	private static final String FIND_ADDRESS_BY_HASH_SQL="SELECT * FROM addresses WHERE base58hash=? LIMIT 1";
 	
 	public SqlBlockStore(NetworkParameters params, File file) {
 		networkParameters=params;
@@ -226,6 +226,8 @@ public class SqlBlockStore implements BlockStore {
 		}
 		
 	}
+	
+	
 
 	public synchronized void put(StoredBlock storedBlock) throws BlockStoreException {
 		ResultSet generatedKeys;
