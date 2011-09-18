@@ -82,8 +82,8 @@ public class Bitten {
 	     {
 	     public void run()
 	     {
-	    	 int min=50000;
-	    	 int max=50010;
+	    	 int min=6000;
+	    	 int max=6050;
 	    	 int i=min;
 	      while(i<max){
 	    	  Long[] a=new Long[1];
@@ -99,7 +99,7 @@ public class Bitten {
 	      }
 	     }
 	     };
-	     new Thread(r).start();
+	    // new Thread(r).start();
 		// frame.getContentPane().add(t, BorderLayout.CENTER);
 		downloader=new BlockChainDownloader(blockChain);
 	    downloader.start();

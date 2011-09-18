@@ -25,7 +25,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -62,10 +64,11 @@ public class SqlBlockStore implements BlockStore {
 	private SqlFullStoredBlock chainHead = null;
 	private Connection sqliteDatabase;
 	private NetworkParameters networkParameters;
+	
 
 	private BigInteger chainWork;
 	private int height;
-
+	private MapCache<String, Long> addressMap= new MapCache<String, Long>();
 	private static final String INSERT_BLOCK_SQL = "INSERT INTO blocks (hash, height, work, version, prev_block_hash, merkle_root, time, bits, nonce) VALUES (?,?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_SQL = "INSERT INTO transactions (hash, block_id, 'index', version, tx_out_count, tx_in_count, locktime, is_coinbase) VALUES (?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_INPUT_SQL = "INSERT INTO transaction_inputs(transaction_id, 'index', previous_output_id, previous_output_hash, previous_output_index, script_length, script, sequence, is_coinbase, from_address_id) VALUES (?,?,?,?,?,?,?,?,?,?);";
@@ -125,6 +128,7 @@ public class SqlBlockStore implements BlockStore {
 				put(storedGenesis);
 				setChainHead(storedGenesis);
 			}
+			sqliteDatabase.setAutoCommit(true);
 
 		} catch (BlockStoreException e) {
 			throw new RuntimeException(e); // Cannot happen.
@@ -204,19 +208,27 @@ public class SqlBlockStore implements BlockStore {
 			throws SQLException {
 		ResultSet rs;
 		long id;
-		findAddressByHashStatement.setString(1, a.toString());
+		Long mapid;
+		String address=a.toString();
+		mapid=addressMap.get(address);
+		if(mapid!=null){
+			return mapid;
+		}
+		findAddressByHashStatement.setString(1, address);
 		rs = findAddressByHashStatement.executeQuery();
 		if (rs.next()) {
 			id = rs.getLong(1);
 			rs.close();
+			addressMap.put(address, id);
 			return id;
 		}
 		rs.close();
-		insertAddressStatement.setString(1, a.toString());
+		insertAddressStatement.setString(1, address);
 		insertAddressStatement.execute();
 		rs = insertAddressStatement.getGeneratedKeys();
 		id = rs.getLong(1);
 		rs.close();
+		addressMap.put(address,id);
 		return id;
 	}
 
@@ -259,6 +271,7 @@ public class SqlBlockStore implements BlockStore {
 		SqlFullStoredBlock block = (SqlFullStoredBlock) storedBlock;
 		long blockId;
 		long transactionId;
+		
 		try {
 			sqliteDatabase.setAutoCommit(false);
 			insertBlockStatement.setString(1,
@@ -307,83 +320,108 @@ public class SqlBlockStore implements BlockStore {
 				generatedKeys.next();
 				transactionId = generatedKeys.getLong(1);
 				generatedKeys.close();
-				int inputindex = 0;
-				int outputindex = 0;
-				long previousOutputId;
-				String prevOutputHash;
-				ResultSet findOutputResults;
-				for (TransactionInput i : t.inputs) {
-					prevOutputHash = HexBin.encode(i.outpoint.hash);
-					findTransactionOutputStatement.setString(1, prevOutputHash);
-					findTransactionOutputStatement.setLong(2, i.outpoint.index);
-					findOutputResults = findTransactionOutputStatement
-							.executeQuery();
-					if (findOutputResults.next()) {
-						previousOutputId = findOutputResults.getLong(1);
-					} else {
-						previousOutputId = 0;
-					}
-					findOutputResults.close();
-					insertTransactionInputStatement.setLong(1, transactionId);
-					insertTransactionInputStatement.setInt(2, inputindex);
-					insertTransactionInputStatement
-							.setLong(3, previousOutputId);
-					insertTransactionInputStatement
-							.setString(4, prevOutputHash);
-					insertTransactionInputStatement
-							.setLong(5, i.outpoint.index);
-					insertTransactionInputStatement.setLong(6,
-							i.scriptBytes.length);
-					insertTransactionInputStatement.setString(7,
-							HexBin.encode(i.scriptBytes));
-					insertTransactionInputStatement.setLong(8, i.sequence);
-					insertTransactionInputStatement.setBoolean(9,
-							i.isCoinBase());
-					try {
-						insertTransactionInputStatement.setLong(10,
-								findOrCreateAddressId(i.getFromAddress()));
-					} catch (ScriptException e) {
-						// TODO Auto-generated catch block
-						insertTransactionInputStatement.setNull(10,
-								java.sql.Types.INTEGER);
-					}
-					insertTransactionInputStatement.execute();
-					inputindex++;
-				}
-				for (TransactionOutput o : t.outputs) {
-					insertTransactionOutputStatement.setLong(1, transactionId);
-					insertTransactionOutputStatement.setInt(2, outputindex);
-					insertTransactionOutputStatement.setLong(3, o.getValue()
-							.longValue());
-					insertTransactionOutputStatement.setLong(4,
-							o.getScriptBytes().length);
-					insertTransactionOutputStatement.setString(5,
-							HexBin.encode(o.getScriptBytes()));
-					try {
-						System.out.println("to address: " + o.getToAddress());
-						insertTransactionOutputStatement.setLong(6,
-								findOrCreateAddressId(o.getToAddress()));
-					} catch (ScriptException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						insertTransactionOutputStatement.setNull(6,
-								java.sql.Types.INTEGER);
-					}
-					insertTransactionStatement.setInt(7, isCoinbase);
-					insertTransactionOutputStatement.execute();
-
-					outputindex++;
-				}
+			
+				storeTransactionInputs(transactionId, t.inputs, isCoinbase);
+				storeTransactionOutputs(transactionId, t.outputs, isCoinbase);
 				index++;
 			}
-			sqliteDatabase.commit();
-			sqliteDatabase.setAutoCommit(true);
+			if((block.getHeight() % 10)==0){
+				sqliteDatabase.commit();
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 
+	}
+	
+	private void storeTransactionOutputs(long transactionId, ArrayList<TransactionOutput> outputs, int isCoinbase){
+		int outputindex=0;
+		for (TransactionOutput o : outputs) {
+			
+			try {
+				insertTransactionOutputStatement.setLong(1, transactionId);
+			
+			insertTransactionOutputStatement.setInt(2, outputindex);
+			insertTransactionOutputStatement.setLong(3, o.getValue()
+					.longValue());
+			insertTransactionOutputStatement.setLong(4,
+					o.getScriptBytes().length);
+			insertTransactionOutputStatement.setString(5,
+					HexBin.encode(o.getScriptBytes()));
+			try {
+				System.out.println("to address: " + o.getToAddress());
+				insertTransactionOutputStatement.setLong(6,
+						findOrCreateAddressId(o.getToAddress()));
+			} catch (ScriptException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				insertTransactionOutputStatement.setNull(6,
+						java.sql.Types.INTEGER);
+			}
+			insertTransactionOutputStatement.setInt(7, isCoinbase);
+			insertTransactionOutputStatement.execute();
+				
+			outputindex++;
+			}
+			catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+	}
+	
+	private void storeTransactionInputs(long transactionId, ArrayList<TransactionInput> inputs, int isCoinbase){
+		int inputindex = 0;
+		long previousOutputId;
+		String prevOutputHash;
+		ResultSet findOutputResults;
+		try {
+		for (TransactionInput i : inputs) {
+			prevOutputHash = HexBin.encode(i.outpoint.hash);
+			findTransactionOutputStatement.setString(1, prevOutputHash);
+			findTransactionOutputStatement.setLong(2, i.outpoint.index);
+			findOutputResults = findTransactionOutputStatement
+					.executeQuery();
+			if (findOutputResults.next()) {
+				previousOutputId = findOutputResults.getLong(1);
+			} else {
+				previousOutputId = 0;
+			}
+			findOutputResults.close();
+			insertTransactionInputStatement.setLong(1, transactionId);
+			insertTransactionInputStatement.setInt(2, inputindex);
+			insertTransactionInputStatement
+					.setLong(3, previousOutputId);
+			insertTransactionInputStatement
+					.setString(4, prevOutputHash);
+			insertTransactionInputStatement
+					.setLong(5, i.outpoint.index);
+			insertTransactionInputStatement.setLong(6,
+					i.scriptBytes.length);
+			insertTransactionInputStatement.setString(7,
+					HexBin.encode(i.scriptBytes));
+			insertTransactionInputStatement.setLong(8, i.sequence);
+			insertTransactionInputStatement.setBoolean(9,
+					i.isCoinBase());
+			try {
+				insertTransactionInputStatement.setLong(10,
+						findOrCreateAddressId(i.getFromAddress()));
+			} catch (ScriptException e) {
+				// TODO Auto-generated catch block
+				insertTransactionInputStatement.setNull(10,
+						java.sql.Types.INTEGER);
+			}
+			insertTransactionInputStatement.execute();
+			inputindex++;
+		}
+		
+		
+	} catch (SQLException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	}
 	}
 
 	public Connection getConnection() {
@@ -464,6 +502,7 @@ public class SqlBlockStore implements BlockStore {
 		s.execute("CREATE INDEX blocks_hash_idx ON blocks (hash);");
 		s.execute("CREATE TABLE transactions(id INTEGER NOT NULL PRIMARY KEY, hash VARCHAR, block_id INTEGER, 'index' INTEGER, version INTEGER, tx_out_count INTEGER, tx_in_count INTEGER, locktime INTEGER, is_coinbase INTEGER);");
 		s.execute("CREATE INDEX transactions_block_id_idx ON transactions (block_id);");
+		s.execute("CREATE INDEX transactions_hash_idx ON transactions (hash);");
 		s.execute("CREATE TABLE transaction_inputs(id INTEGER NOT NULL PRIMARY KEY, transaction_id INTEGER, 'index' INTEGER, previous_output_id INTEGER, previous_output_hash VARCHAR, previous_output_index INTEGER, script_length INTEGER, script VARCHAR, sequence INTEGER, is_coinbase INTEGER, from_address_id INTEGER);");
 		s.execute("CREATE INDEX transaction_inputs_transaction_id_idx ON transaction_inputs (transaction_id);");
 		s.execute("CREATE TABLE transaction_outputs(id INTEGER NOT NULL PRIMARY KEY, transaction_id INTEGER, 'index' INTEGER, value INTEGER, script_length INTEGER, script VARCHAR, to_address_id INTEGER, is_coinbase INTEGER);");

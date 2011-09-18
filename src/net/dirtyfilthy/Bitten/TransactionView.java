@@ -1,10 +1,13 @@
 package net.dirtyfilthy.Bitten;
 
+import java.awt.event.KeyEvent;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
+import javax.swing.JOptionPane;
 
 import prefuse.Constants;
 import prefuse.Display;
@@ -17,6 +20,7 @@ import prefuse.action.assignment.DataSizeAction;
 import prefuse.action.layout.graph.ForceDirectedLayout;
 import prefuse.action.layout.graph.NodeLinkTreeLayout;
 import prefuse.activity.Activity;
+import prefuse.controls.ControlAdapter;
 import prefuse.controls.DragControl;
 import prefuse.controls.FocusControl;
 import prefuse.controls.PanControl;
@@ -31,6 +35,8 @@ import prefuse.render.DefaultRendererFactory;
 import prefuse.render.EdgeRenderer;
 import prefuse.render.LabelRenderer;
 import prefuse.util.ColorLib;
+import prefuse.util.force.DragForce;
+import prefuse.util.force.EulerIntegrator;
 import prefuse.visual.VisualItem;
 
 public class TransactionView extends Display {
@@ -83,13 +89,34 @@ public class TransactionView extends Display {
 			}
 		};
 		
+		ControlAdapter keyboardAdapter=new ControlAdapter(){
+			public void keyTyped(KeyEvent e){
+				processKeys(e);
+			}
+			
+			
+			
+			private void processKeys(KeyEvent e){
+				switch(e.getKeyChar()){
+					case 's':
+						showSearchDialog();
+						break;
+				}
+				
+			}
+			
+		};
+		
 
 		// create a new default renderer factory
 		// return our name label renderer as the default for all non-EdgeItems
 		// includes straight line edges for EdgeItems by default
 		viz.setRendererFactory(new DefaultRendererFactory(r,e));
 		ActionList layout = new ActionList(Activity.INFINITY);
-		layout.add(new ForceDirectedLayout("graph"));
+		ForceDirectedLayout f=new ForceDirectedLayout("graph");
+		// f.getForceSimulator().setIntegrator(new EulerIntegrator());
+		f.getForceSimulator().addForce(new DragForce((float) 0.01));
+		layout.add(f);
 		//layout.add(new NodeLinkTreeLayout("graph"));
 		layout.add(new RepaintAction());
 		DataColorAction fill = new DataColorAction("graph.nodes", "type",
@@ -123,6 +150,11 @@ public class TransactionView extends Display {
         viz.run("layout");
 	}
 	
+	
+	public void showSearchDialog(){
+		String s = (String)JOptionPane.showInputDialog(this, "Search:","Search", JOptionPane.QUESTION_MESSAGE);
+		expandStringAddress(s, true);
+	}
 
 	public void expandTransaction(final long transactionId){
 		System.out.println("expanding tran "+transactionId);
@@ -191,6 +223,41 @@ public class TransactionView extends Display {
 		}
 	
 	}
+	
+	public void expandStringAddress(final String address, boolean sync){
+		Runnable r=new Runnable() {
+			public void run(){
+				try {
+			ArrayList<Long> a=new ArrayList<Long>();
+			PreparedStatement s=db.prepareStatement("SELECT DISTINCT (transactions.id) from transactions left join transaction_inputs ON transactions.id=transaction_inputs.transaction_id LEFT JOIN transaction_outputs AS prev_outputs ON transaction_inputs.previous_output_id=prev_outputs.id LEFT JOIN transaction_outputs ON transactions.id=transaction_outputs.transaction_id JOIN addresses ON transaction_outputs.address_id=addresses.id OR prev_outputs.address_id=addresses.id WHERE addresses.base58hash=?");
+			s.setString(1, address.trim());
+			System.out.println("execute query");
+			ResultSet rs=s.executeQuery();
+			while(rs.next()){
+				a.add(rs.getLong(1));
+			}
+			rs.close();
+			System.out.println("load transaction");
+			
+			loadTransaction((Long[]) a.toArray(new Long[a.size()]));
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			}
+		};
+		if(sync){
+			r.run();
+		}
+		else{
+			new Thread(r).start();
+		}
+	
+	}
+		
+	
 	
 	public void expandOutput(final long outputId, boolean sync){
 		System.out.println("expanding out "+outputId);

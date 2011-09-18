@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -71,7 +72,7 @@ public class NetworkConnection {
         socket.connect(address, connectTimeout);
         
         out = socket.getOutputStream();
-        in = socket.getInputStream();
+        in = new BufferedInputStream(socket.getInputStream());
 
         // the version message never uses checksumming. Update checkumming property after version is read.
         this.serializer = new BitcoinSerializer(params, false);
