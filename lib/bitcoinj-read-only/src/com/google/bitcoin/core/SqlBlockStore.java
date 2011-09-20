@@ -321,7 +321,7 @@ public class SqlBlockStore implements BlockStore {
 				transactionId = generatedKeys.getLong(1);
 				generatedKeys.close();
 			
-				storeTransactionInputs(transactionId, t.inputs, isCoinbase);
+				linkAddressesToWallet(storeTransactionInputs(transactionId, t.inputs, isCoinbase));
 				storeTransactionOutputs(transactionId, t.outputs, isCoinbase);
 				index++;
 			}
@@ -334,6 +334,52 @@ public class SqlBlockStore implements BlockStore {
 			throw new RuntimeException(e);
 		}
 
+	}
+	
+	public void linkAddressesToWallet(ArrayList<Long> addressIds) throws SQLException{
+		if(addressIds.size()<2){
+			return;
+		}
+		ResultSet rs;
+		StringBuilder builder = new StringBuilder();
+		ArrayList<Long> walletIds=new ArrayList<Long>();
+		long walletId;
+		 for (int i = 0; i < addressIds.size();) {
+		        builder.append(addressIds.get(i));
+		        if (++i < addressIds.size()) {
+		            builder.append(",");
+		        }
+		    }
+		String addressList=builder.toString();
+		
+		
+		rs=sqliteDatabase.createStatement().executeQuery("SELECT MIN(COALESCE(wallet_id,id)) FROM addresses WHERE addresses.id IN ("+addressList+")");
+		rs.next();
+		walletId=rs.getLong(1);
+		rs.close();
+		rs=sqliteDatabase.createStatement().executeQuery("SELECT DISTINCT wallet_id FROM addresses WHERE addresses.id IN ("+addressList+") AND wallet_id IS NOT NULL");
+		builder = new StringBuilder();
+		while(rs.next()){
+			walletIds.add(rs.getLong(1));
+		}
+		rs.close();
+		for (int i = 0; i < walletIds.size();) {
+	        builder.append(walletIds.get(i));
+	        if (++i < walletIds.size()) {
+	            builder.append(",");
+	        }
+	    }
+		String walletList=builder.toString();
+		String sql="UPDATE addresses SET wallet_id = "+walletId+" WHERE addresses.id IN (" +addressList+")";
+		System.out.println(sql);
+		sqliteDatabase.createStatement().execute(sql);
+		if(walletIds.size()>0){
+			sql="UPDATE addresses SET wallet_id = "+walletId+" WHERE addresses.wallet_id IN (" +walletList+")";
+			System.out.println(sql);
+			sqliteDatabase.createStatement().execute(sql);
+		}
+		
+		
 	}
 	
 	private void storeTransactionOutputs(long transactionId, ArrayList<TransactionOutput> outputs, int isCoinbase){
@@ -372,11 +418,16 @@ public class SqlBlockStore implements BlockStore {
 		}
 	}
 	
-	private void storeTransactionInputs(long transactionId, ArrayList<TransactionInput> inputs, int isCoinbase){
+	// returns list of address idz
+	
+	private ArrayList<Long> storeTransactionInputs(long transactionId, ArrayList<TransactionInput> inputs, int isCoinbase){
 		int inputindex = 0;
 		long previousOutputId;
 		String prevOutputHash;
 		ResultSet findOutputResults;
+		ResultSet generatedKey;
+		Long addressId;
+		ArrayList<Long> addressIdz=new ArrayList<Long>();
 		try {
 		for (TransactionInput i : inputs) {
 			prevOutputHash = HexBin.encode(i.outpoint.hash);
@@ -406,15 +457,16 @@ public class SqlBlockStore implements BlockStore {
 			insertTransactionInputStatement.setBoolean(9,
 					i.isCoinBase());
 			try {
-				insertTransactionInputStatement.setLong(10,
-						findOrCreateAddressId(i.getFromAddress()));
+				addressId=findOrCreateAddressId(i.getFromAddress());
+				insertTransactionInputStatement.setLong(10,addressId);
+				addressIdz.add(addressId);
 			} catch (ScriptException e) {
 				// TODO Auto-generated catch block
 				insertTransactionInputStatement.setNull(10,
 						java.sql.Types.INTEGER);
 			}
 			insertTransactionInputStatement.execute();
-			inputindex++;
+			
 		}
 		
 		
@@ -422,6 +474,7 @@ public class SqlBlockStore implements BlockStore {
 		// TODO Auto-generated catch block
 		e1.printStackTrace();
 	}
+		return addressIdz;
 	}
 
 	public Connection getConnection() {
@@ -508,7 +561,9 @@ public class SqlBlockStore implements BlockStore {
 		s.execute("CREATE TABLE transaction_outputs(id INTEGER NOT NULL PRIMARY KEY, transaction_id INTEGER, 'index' INTEGER, value INTEGER, script_length INTEGER, script VARCHAR, to_address_id INTEGER, is_coinbase INTEGER);");
 		s.execute("CREATE INDEX transaction_outputs_transaction_id_idx ON transaction_outputs (transaction_id);");
 		s.execute("CREATE TABLE chain_head(block_id INTEGER);");
-		s.execute("CREATE TABLE addresses (id INTEGER NOT NULL PRIMARY KEY, base58hash VARCHAR UNIQUE);");
+		s.execute("CREATE TABLE addresses (id INTEGER NOT NULL PRIMARY KEY, base58hash VARCHAR UNIQUE, wallet_id INTEGER);");
+		s.execute("CREATE INDEX wallet_id_idx ON addresses (wallet_id);");
+		
 		s.execute("CREATE INDEX addresses_base58hash_idx ON addresses (base58hash);");
 		s.execute("INSERT INTO chain_head VALUES(0);");
 	}
