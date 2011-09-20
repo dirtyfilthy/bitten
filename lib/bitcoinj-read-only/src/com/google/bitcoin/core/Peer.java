@@ -72,6 +72,10 @@ public class Peer {
         this.thread.setName("Bitcoin peer thread: " + conn.toString());
         this.thread.start();
     }
+    
+    public boolean running(){
+    	return running; 
+    }
 
     /**
      * Runs in the peers network thread and manages communication with the peer.

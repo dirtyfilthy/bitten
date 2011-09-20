@@ -28,13 +28,14 @@ public class BlockChainDownloader extends Thread {
 	
 		DnsDiscovery dnsDiscovery=new DnsDiscovery(Bitten.networkParameters);
 		try {
+			while(true){
 			InetSocketAddress addresses[]=dnsDiscovery.getPeers();
 			//InetSocketAddress addresses[]={new InetSocketAddress("localhost",8333)};
 			System.out.println("peers "+addresses.length);
 			NetworkConnection conn;
 			Peer peer;
 			System.out.println("connecting to peers");
-			while(true){
+			
 				for(InetSocketAddress a : addresses){
 					try {
 						System.out.println("Trying "+a);
@@ -45,7 +46,11 @@ public class BlockChainDownloader extends Thread {
 					peer.start();
 					peer.startBlockChainDownload();
 					while(true){
-						sleep(1);
+						if(!peer.running()){
+							System.out.println("peer stopped!");
+							break;
+						}
+						sleep(1000);
 					}
 					} catch (IOException e) {
 						System.out.println(e);
@@ -53,8 +58,10 @@ public class BlockChainDownloader extends Thread {
 					} catch (ProtocolException e) {
 						continue;
 					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 						continue;
-					}
+					} 
 				}
 				
 			}

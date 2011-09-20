@@ -68,7 +68,7 @@ public class SqlBlockStore implements BlockStore {
 
 	private BigInteger chainWork;
 	private int height;
-	private MapCache<String, Long> addressMap= new MapCache<String, Long>();
+	private MapCache<String, Long> addressMap= new MapCache<String, Long>(1000);
 	private static final String INSERT_BLOCK_SQL = "INSERT INTO blocks (hash, height, work, version, prev_block_hash, merkle_root, time, bits, nonce) VALUES (?,?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_SQL = "INSERT INTO transactions (hash, block_id, 'index', version, tx_out_count, tx_in_count, locktime, is_coinbase) VALUES (?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_INPUT_SQL = "INSERT INTO transaction_inputs(transaction_id, 'index', previous_output_id, previous_output_hash, previous_output_index, script_length, script, sequence, is_coinbase, from_address_id) VALUES (?,?,?,?,?,?,?,?,?,?);";
