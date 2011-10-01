@@ -1,10 +1,14 @@
 package com.google.bitcoin.core;
 
+import java.util.Date;
+
 public class SqlTransaction extends Transaction {
 	
 	public long id;
 	public long block_id;
 	public long index;
+	public long createdAt;
+	
 
 	public SqlTransaction(NetworkParameters params) {
 		super(params);

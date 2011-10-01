@@ -162,6 +162,16 @@ public class SqlBlockStore implements BlockStore {
 		t.sequence = rs.getLong(9);
 		return t;
 	}
+	
+	public ArrayList<SqlTransactionOutput> loadTransactionOutputsFromSql(String sql) throws SQLException{
+		ArrayList list=new ArrayList<SqlTransactionOutput>();
+		ResultSet rs=sqliteDatabase.createStatement().executeQuery(sql);
+		while(rs.next()){
+			list.add(loadTransactionOutputFromResultSet(rs));
+		}
+		rs.close();
+		return list;
+	}
 
 	public SqlTransactionOutput loadTransactionOutputFromResultSet(ResultSet rs)
 			throws SQLException {
@@ -175,6 +185,14 @@ public class SqlBlockStore implements BlockStore {
 		t.index = rs.getLong(3);
 		return t;
 	}
+	
+	public ResultSet rawSqlQuery(String sql) throws SQLException{
+		return sqliteDatabase.createStatement().executeQuery(sql);
+	}
+	
+	public PreparedStatement prepareStatement(String sql) throws SQLException{
+		return sqliteDatabase.prepareStatement(sql);
+	}
 
 	public SqlTransaction loadTransactionFromResultSet(ResultSet rs)
 			throws SQLException {
@@ -185,6 +203,12 @@ public class SqlBlockStore implements BlockStore {
 		t.index = rs.getLong(4);
 		t.version = rs.getLong(5);
 		t.lockTime = rs.getLong(8);
+		try {
+			t.createdAt = rs.getLong(10);
+		}
+		catch(SQLException e){
+			// do nothing
+		}
 		findTransactionInputsByTransactionIdStatement.setLong(1, t.id);
 		rs2 = findTransactionInputsByTransactionIdStatement.executeQuery();
 		while (rs2.next()) {
@@ -563,6 +587,8 @@ public class SqlBlockStore implements BlockStore {
 		s.execute("CREATE TABLE chain_head(block_id INTEGER);");
 		s.execute("CREATE TABLE addresses (id INTEGER NOT NULL PRIMARY KEY, base58hash VARCHAR UNIQUE, wallet_id INTEGER);");
 		s.execute("CREATE INDEX wallet_id_idx ON addresses (wallet_id);");
+		s.execute("CREATE INDEX tran_out_to_idx ON transaction_outputs (to_address_id);");
+		s.execute("CREATE INDEX tran_in_from_idx ON transaction_inputs (from_address_id);");
 		
 		s.execute("CREATE INDEX addresses_base58hash_idx ON addresses (base58hash);");
 		s.execute("INSERT INTO chain_head VALUES(0);");

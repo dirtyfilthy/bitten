@@ -1,8 +1,11 @@
 package net.dirtyfilthy.Bitten;
 
+import java.awt.Dimension;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
+import javax.swing.JSplitPane;
+
 import java.awt.BorderLayout;
 import java.io.File;
 import java.sql.SQLException;
@@ -46,15 +49,17 @@ public class Bitten {
 	
 	/**
 	 * Create the application.
+	 * @throws SQLException 
 	 */
-	public Bitten() {
+	public Bitten() throws SQLException {
 		initialize();
 	}
 
 	/**
 	 * Initialize the contents of the frame.
+	 * @throws SQLException 
 	 */
-	private void initialize() {
+	private void initialize() throws SQLException {
 		
 		frame = new JFrame();
 		frame.setBounds(100, 100, 546, 381);
@@ -66,29 +71,35 @@ public class Bitten {
 		
 		Wallet wallet = new Wallet(Bitten.networkParameters);
 		blockChain=new BlockChain(Bitten.networkParameters,wallet,getBlockStore());
-
+		SqlBlockStore store= (SqlBlockStore) getBlockStore();
 		 lblStatusBar = new StatusBar(blockChain);
-		final TransactionView t;
+		final AddressView t;
 		frame.getContentPane().add(lblStatusBar, BorderLayout.SOUTH);
-		try {
-			t=new TransactionView(((SqlBlockStore) getBlockStore()).getConnection());
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-		frame.getContentPane().add(t, BorderLayout.CENTER);;
+		ControlPanel c=new ControlPanel(store);
+			t=new AddressView(store.getConnection());
+			JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                    t, c);
+			splitPane.setVisible(true);
+			splitPane.setOneTouchExpandable(true);
+			splitPane.setDividerLocation(150);
+			Dimension minimumSize = new Dimension(100, 50);
+			c.setMinimumSize(minimumSize);
+		frame.getContentPane().add(splitPane, BorderLayout.CENTER);;
 		 frame.pack();           // layout components in window
 	     frame.setVisible(true); // show the window
+	     
 	     Runnable r=new Runnable()
 	     {
 	     public void run()
 	     {
-	    	 int min=6000;
-	    	 int max=6050;
+	    	 int min=200000;
+	    	 int max=200010;
 	    	 int i=min;
 	      while(i<max){
-	    	  Long[] a=new Long[1];
-	    	  a[0]=new Long(i);
-	    	  t.loadTransaction(a);
+	    	
+	    	  
+			//	t.loadTransaction(new Long[] {Long.valueOf(i)});
+			
 	    	  i++;
 	    	  try {
 				Thread.sleep(100);
@@ -99,10 +110,10 @@ public class Bitten {
 	      }
 	     }
 	     };
-	    // new Thread(r).start();
+	 //   new Thread(r).start();
 		// frame.getContentPane().add(t, BorderLayout.CENTER);
 		downloader=new BlockChainDownloader(blockChain);
-	    downloader.start();
+	    // downloader.start();
 	}
 
 }

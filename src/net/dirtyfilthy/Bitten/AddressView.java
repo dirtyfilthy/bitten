@@ -39,7 +39,7 @@ import prefuse.util.force.DragForce;
 import prefuse.util.force.EulerIntegrator;
 import prefuse.visual.VisualItem;
 
-public class TransactionView extends Display {
+public class AddressView extends Display {
 	private DatabaseDataSource dbSource;
 	private String label="label";
 	private Table transactionNodeTable=new Table();
@@ -49,7 +49,7 @@ public class TransactionView extends Display {
 	private Connection db;
 	
 	
-	public TransactionView(Connection c) throws SQLException{
+	public AddressView(Connection c) throws SQLException{
 		db=c;
 		int[] palette = new int[] {
 			    ColorLib.rgb(255,180,180), ColorLib.rgb(190,190,255), ColorLib.rgb(190,190,0)
@@ -57,7 +57,6 @@ public class TransactionView extends Display {
 		dbSource=ConnectionFactory.getDatabaseConnection(c);
 		transactionNodeTable.addColumn("id",int.class);
 		transactionNodeTable.addColumn("type",int.class);
-		transactionNodeTable.addColumn("transaction_id",int.class);
 		transactionNodeTable.addColumn("btc",double.class);
 		transactionEdgeTable.addColumn("id", int.class);
 		transactionEdgeTable.addColumn("source", int.class);
@@ -78,14 +77,9 @@ public class TransactionView extends Display {
 		FocusControl focusControl=new FocusControl(2){
 			public void itemClicked(VisualItem i, java.awt.event.MouseEvent e){
 				int id=i.getInt("id");
-				int type=i.getInt("type");
-				int transaction_id=i.getInt("transaction_id");
-				if(type==2){
-					expandOutput(id,false);
-				}
-				else if(type==0 || type==1){
-					expandTransaction(transaction_id);
-				}
+				
+				expandAddress(id);
+				
 				
 			}
 		};
@@ -161,23 +155,23 @@ public class TransactionView extends Display {
 		expandStringAddress(s, true);
 	}
 
-	public void expandTransaction(final long transactionId){
-		System.out.println("expanding tran "+transactionId);
+	public void expandAddress(final long addressId){
+		System.out.println("expanding tran "+addressId);
 		Runnable r=new Runnable() {
 			public void run(){
 		try {
 			
 			ArrayList<Long> a=new ArrayList<Long>();
-			PreparedStatement s=db.prepareStatement("SELECT id FROM transaction_outputs WHERE transaction_id=? UNION SELECT previous_output_id as id FROM transaction_inputs WHERE transaction_id=? and previous_output_id!=0");
-			s.setLong(1, transactionId);
-			s.setLong(2, transactionId);
+			PreparedStatement s=db.prepareStatement("SELECT from_address_id AS id FROM transaction_outputs LEFT JOIN transaction_inputs ON transaction_inputs.transaction_id=transaction_outputs.transaction_id  WHERE to_address_id=? UNION SELECT to_address_id as id FROM transaction_inputs LEFT JOIN transaction_outputs ON transaction_inputs.transaction_id=transaction_outputs.transaction_id  WHERE from_address_id=? ");
+			s.setLong(1, addressId);
+			s.setLong(2, addressId);
 			ResultSet rs=s.executeQuery();
 			while(rs.next()){
 				a.add(rs.getLong(1));
 			}
 			rs.close();
 			
-				expandOutputMulti((Long[]) a.toArray(new Long[a.size()]),true);
+		      loadAddress((Long[]) a.toArray(new Long[a.size()]));
 			
 			
 		} catch (SQLException e) {
@@ -212,7 +206,7 @@ public class TransactionView extends Display {
 			}
 			rs.close();
 			
-				loadTransaction((Long[]) a.toArray(new Long[a.size()]));
+		//		loadTransaction((Long[]) a.toArray(new Long[a.size()]));
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -234,9 +228,8 @@ public class TransactionView extends Display {
 			public void run(){
 				try {
 			ArrayList<Long> a=new ArrayList<Long>();
-			PreparedStatement s=db.prepareStatement("SELECT DISTINCT (transaction_id) from addresses join transaction_outputs ON to_address_id=addresses.id where addresses.base58hash=? UNION SELECT DISTINCT (transaction_id) from addresses join transaction_inputs ON from_address_id=addresses.id where addresses.base58hash=?");
+			PreparedStatement s=db.prepareStatement("SELECT DISTINCT id from addresses where addresses.base58hash=? ");
 			s.setString(1, address.trim());
-			s.setString(2, address.trim());
 			System.out.println("execute query find address "+address);
 			ResultSet rs=s.executeQuery();
 			System.out.println("after exec");
@@ -246,7 +239,7 @@ public class TransactionView extends Display {
 			rs.close();
 			System.out.println("load transaction");
 			
-			loadTransaction((Long[]) a.toArray(new Long[a.size()]));
+			loadAddress((Long[]) a.toArray(new Long[a.size()]));
 			
 			
 		} catch (SQLException e) {
@@ -283,7 +276,7 @@ public class TransactionView extends Display {
 			rs.close();
 			System.out.println("load transaction");
 			
-			loadTransaction((Long[]) a.toArray(new Long[a.size()]));
+		//	loadTransaction((Long[]) a.toArray(new Long[a.size()]));
 			
 			
 		} catch (SQLException e) {
@@ -301,7 +294,7 @@ public class TransactionView extends Display {
 	
 	}
 	
-	public void loadTransaction(Long[] idz){
+	public void loadAddress(Long[] idz){
 		String sql="";
 		StringBuilder builder = new StringBuilder();
 		
@@ -313,16 +306,16 @@ public class TransactionView extends Display {
 		    }
 		synchronized(viz){
 		try {
-			sql="SELECT (id+9999999) AS id, is_coinbase AS type, id as transaction_id, 0.0 AS btc FROM transactions  WHERE id IN("+builder+")";
+			sql="SELECT id AS id, 0 as type, 0.0 AS btc FROM addresses  WHERE id IN("+builder+")";
 			dbSource.getData(transactionNodeTable,sql,"id");
 		
-		sql="SELECT previous_output_id AS id,2 AS type, transaction_inputs.transaction_id, value/100000000.0 AS btc FROM transaction_inputs  LEFT JOIN transaction_outputs ON transaction_outputs.id=previous_output_id WHERE previous_output_id!=0 AND transaction_inputs.transaction_id IN("+builder+")";
+		sql="SELECT DISTINCT from_address_id AS id, 0 AS type, 0 AS btc FROM transaction_outputs  LEFT JOIN transaction_inputs ON transaction_outputs.transaction_id=transaction_inputs.transaction_id WHERE transaction_outputs.to_address_id IN("+builder+") AND from_address_id IS NOT NULL";
 		dbSource.getData(transactionNodeTable,sql,"id");
-		sql="SELECT id AS id,2 AS type, transaction_id,value/100000000.0 AS btc FROM transaction_outputs WHERE transaction_id IN("+builder+")";
+		sql="SELECT DISTINCT to_address_id AS id, 0 AS type, 0 AS btc FROM transaction_inputs  LEFT JOIN transaction_outputs ON transaction_outputs.transaction_id=transaction_inputs.transaction_id  WHERE transaction_inputs.from_address_id IN("+builder+") AND to_address_id IS NOT NULL";
 		dbSource.getData(transactionNodeTable,sql,"id");
-		sql="SELECT transaction_inputs.id as id, (transaction_inputs.transaction_id+9999999) as target, previous_output_id as source, value/100000000.0 AS btc, 0 AS type FROM transaction_inputs  LEFT JOIN transaction_outputs ON transaction_outputs.id=previous_output_id WHERE previous_output_id!=0 AND transaction_inputs.transaction_id IN("+builder+")";
+		sql="SELECT transaction_outputs.id+(99*transaction_inputs.id) as id, to_address_id  as target, from_address_id as source, value/100000000.0 AS btc, 0 AS type FROM transaction_inputs  LEFT JOIN transaction_outputs ON transaction_outputs.transaction_id=transaction_inputs.transaction_id WHERE from_address_id IN ("+builder+") AND to_address_id NOT NULL";
 		dbSource.getData(transactionEdgeTable,sql,"id");
-		sql="SELECT (id+9999999) as id, (transaction_id+9999999) as source, id as target, value/100000000.0 AS btc, 1 as type FROM transaction_outputs WHERE transaction_id IN("+builder+")";
+		sql="SELECT transaction_outputs.id+(99*transaction_inputs.id) as id, to_address_id  as target, from_address_id as source, value/100000000.0 AS btc, 0 AS type FROM transaction_outputs  LEFT JOIN transaction_inputs ON transaction_outputs.transaction_id=transaction_inputs.transaction_id WHERE to_address_id IN ("+builder+") AND from_address_id NOT NULL";
 		dbSource.getData(transactionEdgeTable,sql,"id");
 		viz.run("color");
 		
