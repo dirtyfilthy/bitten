@@ -73,7 +73,7 @@ public class SqlBlockStore implements BlockStore {
 	private static final String INSERT_TRANSACTION_SQL = "INSERT INTO transactions (hash, block_id, 'index', version, tx_out_count, tx_in_count, locktime, is_coinbase) VALUES (?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_INPUT_SQL = "INSERT INTO transaction_inputs(transaction_id, 'index', previous_output_id, previous_output_hash, previous_output_index, script_length, script, sequence, is_coinbase, from_address_id) VALUES (?,?,?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_OUTPUT_SQL = "INSERT INTO transaction_outputs(transaction_id, 'index', value, script_length, script,to_address_id,is_coinbase) VALUES (?,?,?,?,?,?,?);";
-	private static final String FIND_TRANSACTION_OUTPUT_SQL = "SELECT transaction_outputs.id FROM transaction_outputs JOIN transactions ON transaction_id=transactions.id WHERE transactions.hash=? AND transaction_outputs.'index'=? LIMIT 1";
+	private static final String FIND_TRANSACTION_OUTPUT_SQL = "SELECT transaction_outputs.id,from_address_id FROM transaction_outputs JOIN transactions ON transaction_id=transactions.id WHERE transactions.hash=? AND transaction_outputs.'index'=? LIMIT 1";
 	private static final String FIND_TRANSACTIONS_BY_BLOCK_ID_SQL = "SELECT transactions.* FROM transactions WHERE transactions.block_id=? ORDER BY 'index';";
 	private static final String FIND_TRANSACTION_INPUTS_BY_TRANSACTION_ID_SQL = "SELECT transaction_inputs.* FROM transaction_inputs WHERE transaction_inputs.transaction_id=? ORDER BY 'index';";
 	private static final String FIND_TRANSACTION_OUTPUTS_BY_TRANSACTION_ID_SQL = "SELECT transaction_outputs.* FROM transaction_outputs WHERE transaction_outputs.transaction_id=? ORDER BY 'index';";
@@ -454,6 +454,7 @@ public class SqlBlockStore implements BlockStore {
 		ArrayList<Long> addressIdz=new ArrayList<Long>();
 		try {
 		for (TransactionInput i : inputs) {
+			
 			prevOutputHash = HexBin.encode(i.outpoint.hash);
 			findTransactionOutputStatement.setString(1, prevOutputHash);
 			findTransactionOutputStatement.setLong(2, i.outpoint.index);
@@ -461,8 +462,10 @@ public class SqlBlockStore implements BlockStore {
 					.executeQuery();
 			if (findOutputResults.next()) {
 				previousOutputId = findOutputResults.getLong(1);
+				addressId=findOutputResults.getLong(2);
 			} else {
 				previousOutputId = 0;
+				addressId=null;
 			}
 			findOutputResults.close();
 			insertTransactionInputStatement.setLong(1, transactionId);
@@ -480,11 +483,10 @@ public class SqlBlockStore implements BlockStore {
 			insertTransactionInputStatement.setLong(8, i.sequence);
 			insertTransactionInputStatement.setBoolean(9,
 					i.isCoinBase());
-			try {
-				addressId=findOrCreateAddressId(i.getFromAddress());
+			if(addressId!=null){
 				insertTransactionInputStatement.setLong(10,addressId);
 				addressIdz.add(addressId);
-			} catch (ScriptException e) {
+			} else {
 				// TODO Auto-generated catch block
 				insertTransactionInputStatement.setNull(10,
 						java.sql.Types.INTEGER);
