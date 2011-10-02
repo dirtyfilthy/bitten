@@ -6,12 +6,16 @@ import net.dirtyfilthy.Bitten.TransactionEdge;
 
 
 
-public class SqlTransactionOutput extends TransactionOutput {
+public class SqlTransactionOutput extends TransactionOutput implements AddressListable {
 	
 	public long id;
 	public long transactionId;
 	public long index;
+	public long toAddressId;
+	public SqlAddress address;
 
+	
+	
 
 	public SqlTransactionOutput(NetworkParameters params, Transaction parent,
 			byte[] payload, int offset) throws ProtocolException {
@@ -43,7 +47,21 @@ public class SqlTransactionOutput extends TransactionOutput {
 		return (int) id;
 		
 	}
+
+	@Override
+	public long getAddressId() {
+		// TODO Auto-generated method stub
+		return toAddressId;
+	}
+
+	@Override
+	public long getBtcValue() {
+		return this.getValue().longValue();
+	}
 	
+	public SqlAddress getAddress(){
+		return address;
+	}
 	
 
 }

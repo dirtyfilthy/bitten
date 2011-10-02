@@ -1,11 +1,14 @@
 package com.google.bitcoin.core;
 
-public class SqlTransactionInput extends TransactionInput {
+public class SqlTransactionInput extends TransactionInput implements AddressListable {
 	
 	public long id;
 	public long transactionId;
 	public long previousOutputId;
+	public long fromAddressId;
+	public long value;
 	public long index;
+	public SqlAddress address;
 
 	public SqlTransactionInput(NetworkParameters params,
 			Transaction parentTransaction, byte[] scriptBytes) {
@@ -24,6 +27,21 @@ public class SqlTransactionInput extends TransactionInput {
 			throws ProtocolException {
 		super(params, parentTransaction, payload, offset);
 	
+	}
+	
+	public SqlAddress getAddress(){
+		return address;
+	}
+
+	@Override
+	public long getAddressId() {
+		
+		return fromAddressId;
+	}
+
+	@Override
+	public long getBtcValue() {
+		return value;
 	}
 
 }

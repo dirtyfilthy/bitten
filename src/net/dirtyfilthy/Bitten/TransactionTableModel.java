@@ -1,6 +1,7 @@
 package net.dirtyfilthy.Bitten;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -38,7 +39,7 @@ public class TransactionTableModel extends AbstractTableModel {
 		case 0:
 			return t.getHash();
 		case 1:
-			return t.createdAt;
+			return new Date((long) t.createdAt*1000);
 		case 2:
 			return t.getInputs();
 		case 3:

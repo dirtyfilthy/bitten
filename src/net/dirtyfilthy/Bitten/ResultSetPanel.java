@@ -39,7 +39,7 @@ public abstract class ResultSetPanel extends JPanel implements PropertyChangeLis
 	
 	public void execute(){
 		createStatusBar();
-		task=new SearchBlockStoreTask(query);
+		task=new SearchBlockStoreTask(query,"resultset");
 		task.addPropertyChangeListener(this);
 		task.execute();
 	}
