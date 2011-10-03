@@ -43,8 +43,8 @@ public class Transaction extends Message implements Serializable {
 
     // These are serialized in both bitcoin and java serialization.
     long version;
-    ArrayList<TransactionInput> inputs;
-    ArrayList<TransactionOutput> outputs;
+    public ArrayList<TransactionInput> inputs;
+    public ArrayList<TransactionOutput> outputs;
     long lockTime;
 
     // This is only stored in Java serialization. It records which blocks (and their height + work) the transaction

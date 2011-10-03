@@ -3,12 +3,16 @@ package net.dirtyfilthy.Bitten;
 import java.util.ArrayList;
 import java.util.Date;
 
+import javax.swing.event.TreeModelListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.tree.TreePath;
+
+import org.jdesktop.swingx.treetable.TreeTableModel;
 
 import com.google.bitcoin.core.SqlTransaction;
 import com.google.bitcoin.core.Transaction;
 
-public class TransactionTableModel extends AbstractTableModel {
+public class TransactionTableModel implements TreeTableModel {
 	private String[] columnNames = {"id","time","from","to"};
 	private ArrayList<SqlTransaction> transactions;
 	
@@ -21,7 +25,6 @@ public class TransactionTableModel extends AbstractTableModel {
 		return columnNames.length;
 	}
 
-	@Override
 	public int getRowCount() {
 		return transactions.size();
 	}
@@ -49,10 +52,82 @@ public class TransactionTableModel extends AbstractTableModel {
 		}
 	}
 	
-	@Override
+	
 	public Object getValueAt(int arg0, int arg1) {
 		// TODO Auto-generated method stub
 		return getTransactionValueAt(transactions.get(arg0),arg1);
+	}
+
+	@Override
+	public void addTreeModelListener(TreeModelListener arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Object getChild(Object arg0, int arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getChildCount(Object arg0) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int getIndexOfChild(Object arg0, Object arg1) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public Object getRoot() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isLeaf(Object arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void removeTreeModelListener(TreeModelListener arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void valueForPathChanged(TreePath arg0, Object arg1) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int getHierarchicalColumn() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public Object getValueAt(Object arg0, int arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isCellEditable(Object arg0, int arg1) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setValueAt(Object arg0, Object arg1, int arg2) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	

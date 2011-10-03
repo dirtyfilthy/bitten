@@ -28,7 +28,7 @@ public class AddressListRenderer implements TableCellRenderer {
 	public Component getTableCellRendererComponent(JTable table, Object value,
 			boolean isSelected, boolean hasFocus, int row, int col) {
 		Collection<AddressListable> list=(Collection<AddressListable>) value;
-		Object[][] data=new Object[list.size()+1][];
+		Object[][] data=new Object[list.size()][];
 		Object[] columns={"Address","Value"};
 		int i=0;
 		for(AddressListable l : list){
@@ -43,7 +43,6 @@ public class AddressListRenderer implements TableCellRenderer {
 			data[i]=new Object[] {add,Utils.bitcoinValueToFriendlyString(BigInteger.valueOf(v))};
 			i++;
 		}
-		data[list.size()]=new Object[] {"hello","nurse"};
 		JTable t=new JTable(new DefaultTableModel(data,columns));
 		
 			table.setRowHeight(64);

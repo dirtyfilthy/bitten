@@ -13,7 +13,7 @@ public class TransactionTable extends JTable {
 	
 	
 	TransactionTable(ArrayList<SqlTransaction> transactions){
-		super(new TransactionTableModel(transactions));
+		//super(new TransactionTableModel(transactions));
 		TableColumn from=this.getColumn("from");
 		TableColumn to=this.getColumn("to");
 		from.setCellRenderer(new AddressListRenderer());

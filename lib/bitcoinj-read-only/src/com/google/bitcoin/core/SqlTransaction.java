@@ -1,6 +1,8 @@
 package com.google.bitcoin.core;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 public class SqlTransaction extends Transaction {
 	
@@ -25,5 +27,8 @@ public class SqlTransaction extends Transaction {
 		super(params, payload, offset);
 		
 	}
+	
+	
+
 
 }

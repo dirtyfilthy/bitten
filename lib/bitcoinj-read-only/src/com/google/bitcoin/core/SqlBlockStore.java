@@ -156,8 +156,8 @@ public class SqlBlockStore implements BlockStore {
 		System.out.println("outpoint hash " + HexBin.encode(op.hash));
 		t.outpoint = op;
 		t.sequence = rs.getLong(9);
-		t.fromAddressId= rs.getLong(10);
-		t.value=rs.getLong(11);
+		t.fromAddressId= rs.getLong(11);
+		t.value=rs.getLong(12);
 		return t;
 	}
 	

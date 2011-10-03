@@ -4,10 +4,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
+import org.jdesktop.swingx.JXTreeTable;
+import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
+import org.jdesktop.swingx.treetable.TreeTableModel;
 
 import com.google.bitcoin.core.SqlBlockStore;
 import com.google.bitcoin.core.SqlTransaction;
@@ -33,9 +38,12 @@ public class TransactionResultPanel extends ResultSetPanel {
 				System.out.println("add transaction");
 			};
 			rs.close();
+			String columns[]={"id","time","from","btc","to","btc"};
+			
+			TreeTableModel  treeTableModel = new DefaultTreeTableModel(new RootTransactionTreeNode(transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
-			table=new TransactionTable(transactions);
-			DefaultTableModel m= new DefaultTableModel(new Object[][] {{"one","two"},{"three","four"}}, new Object[] {"high","low"}); 
+			table=new JXTreeTable(treeTableModel);
+			
 			//table=new JTable(m);
 			table.setVisible(true);
 			this.add(new JScrollPane(table));
