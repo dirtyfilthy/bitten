@@ -18,7 +18,7 @@ import com.google.bitcoin.core.TransactionOutput;
 
 public class TransactionTreeNode implements TreeTableNode {
 	private SqlTransaction transaction;
-	
+	private boolean visible=false;
 	ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
 	TreeTableNode parent;
 	TransactionTreeNode(TreeTableNode parent, SqlTransaction t){
@@ -86,7 +86,7 @@ public class TransactionTreeNode implements TreeTableNode {
 	@Override
 	public int getColumnCount() {
 		// TODO Auto-generated method stub
-		return 6;
+		return 7;
 	}
 
 	@Override
@@ -109,6 +109,8 @@ public class TransactionTreeNode implements TreeTableNode {
 			return transaction.getHashAsString();
 		case 1:
 			return new Date(transaction.createdAt*1000);
+		case 6:
+			return visible;
 		default:
 			return "";
 		}
@@ -117,6 +119,9 @@ public class TransactionTreeNode implements TreeTableNode {
 	@Override
 	public boolean isEditable(int arg0) {
 		// TODO Auto-generated method stub
+		if(arg0==6){
+			return true;
+		}
 		return false;
 	}
 
@@ -129,6 +134,9 @@ public class TransactionTreeNode implements TreeTableNode {
 	@Override
 	public void setValueAt(Object arg0, int arg1) {
 		// TODO Auto-generated method stub
+				if(arg1==6){
+					visible=(Boolean) arg0;
+				}
 
 	}
 

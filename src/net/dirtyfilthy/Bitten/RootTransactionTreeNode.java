@@ -60,7 +60,7 @@ public class RootTransactionTreeNode implements TreeTableNode {
 	@Override
 	public int getColumnCount() {
 		// TODO Auto-generated method stub
-		return 6;
+		return 7;
 	}
 
 	@Override

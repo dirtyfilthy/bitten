@@ -38,11 +38,11 @@ public class TransactionResultPanel extends ResultSetPanel {
 				System.out.println("add transaction");
 			};
 			rs.close();
-			String columns[]={"id","time","from","btc","to","btc"};
+			String columns[]={"id","time","from","btc","to","btc","V"};
 			
-			TreeTableModel  treeTableModel = new DefaultTreeTableModel(new RootTransactionTreeNode(transactions), Arrays.asList(columns));
+			TreeTableModel  treeTableModel = new TransactionTreeTableModel(new RootTransactionTreeNode(transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
-			table=new JXTreeTable(treeTableModel);
+			table=new TransactionTreeTable(treeTableModel);
 			
 			//table=new JTable(m);
 			table.setVisible(true);

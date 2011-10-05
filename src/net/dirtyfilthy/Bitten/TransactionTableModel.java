@@ -120,7 +120,9 @@ public class TransactionTableModel implements TreeTableModel {
 
 	@Override
 	public boolean isCellEditable(Object arg0, int arg1) {
-		// TODO Auto-generated method stub
+		if(arg1==6){
+			return true;
+		}
 		return false;
 	}
 

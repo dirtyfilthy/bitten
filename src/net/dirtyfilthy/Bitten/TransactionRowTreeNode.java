@@ -60,7 +60,7 @@ public class TransactionRowTreeNode implements TreeTableNode {
 	@Override
 	public int getColumnCount() {
 		// TODO Auto-generated method stub
-		return 6;
+		return 7;
 	}
 
 	@Override
@@ -117,7 +117,7 @@ public class TransactionRowTreeNode implements TreeTableNode {
 			}
 			return Utils.bitcoinValueToFriendlyString(BigInteger.valueOf(output.getBtcValue()));
 		default:
-			return "";
+			return null;
 				
 		}
 	}
