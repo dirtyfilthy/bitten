@@ -21,11 +21,13 @@ public class TransactionResultPanel extends ResultSetPanel {
 	protected ArrayList<SqlTransaction> transactions;
 	protected SqlBlockStore store;
 	protected JTable table;
+	protected ControlPanel panel;
 	
-	TransactionResultPanel(PreparedStatement query,SqlBlockStore s){
+	TransactionResultPanel(ControlPanel p,SqlBlockStore s,PreparedStatement query){
 		super();
 		this.query=query;
 		this.store=s;
+		this.panel=p;
 		transactions=new ArrayList<SqlTransaction>();
 	}
 	
@@ -40,13 +42,14 @@ public class TransactionResultPanel extends ResultSetPanel {
 			rs.close();
 			String columns[]={"id","time","from","btc","to","btc","V"};
 			
-			TreeTableModel  treeTableModel = new TransactionTreeTableModel(new RootTransactionTreeNode(transactions), Arrays.asList(columns));
+			TreeTableModel  treeTableModel = new TransactionTreeTableModel(new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
 			table=new TransactionTreeTable(treeTableModel);
 			
 			//table=new JTable(m);
 			table.setVisible(true);
 			this.add(new JScrollPane(table));
+			table.getModel().addTableModelListener(panel);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

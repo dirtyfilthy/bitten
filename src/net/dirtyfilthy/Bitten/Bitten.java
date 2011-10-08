@@ -73,17 +73,17 @@ public class Bitten {
 		blockChain=new BlockChain(Bitten.networkParameters,wallet,getBlockStore());
 		SqlBlockStore store= (SqlBlockStore) getBlockStore();
 		 lblStatusBar = new StatusBar(blockChain);
-		final AddressView t;
+		final WalletView view=new WalletView();
 		frame.getContentPane().add(lblStatusBar, BorderLayout.SOUTH);
-		ControlPanel c=new ControlPanel(store);
-			t=new AddressView(store.getConnection());
+		ControlPanel panel=new ControlPanel(store,view);
+
 			JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                    t, c);
+                    view, panel);
 			splitPane.setVisible(true);
 			splitPane.setOneTouchExpandable(true);
 			splitPane.setDividerLocation(150);
 			Dimension minimumSize = new Dimension(100, 50);
-			c.setMinimumSize(minimumSize);
+			panel.setMinimumSize(minimumSize);
 		frame.getContentPane().add(splitPane, BorderLayout.CENTER);;
 		 frame.pack();           // layout components in window
 	     frame.setVisible(true); // show the window

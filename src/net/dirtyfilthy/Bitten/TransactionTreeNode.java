@@ -17,12 +17,14 @@ import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutput;
 
 public class TransactionTreeNode implements TreeTableNode {
-	private SqlTransaction transaction;
-	private boolean visible=false;
+	public SqlTransaction transaction;
+	public boolean visible=false;
+	private ControlPanel panel;
 	ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
 	TreeTableNode parent;
-	TransactionTreeNode(TreeTableNode parent, SqlTransaction t){
+	TransactionTreeNode(TreeTableNode parent, ControlPanel p, SqlTransaction t){
 		transaction=t;
+		panel=p;
 		this.parent=parent;
 		ArrayList<TransactionInput> inputs=transaction.inputs;
 		ArrayList<TransactionOutput> outputs=transaction.outputs;
@@ -136,7 +138,9 @@ public class TransactionTreeNode implements TreeTableNode {
 		// TODO Auto-generated method stub
 				if(arg1==6){
 					visible=(Boolean) arg0;
+					panel.notifyVisibilityChange(this);
 				}
+				
 
 	}
 

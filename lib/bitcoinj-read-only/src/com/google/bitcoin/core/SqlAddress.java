@@ -15,6 +15,9 @@ public class SqlAddress extends Address {
 	
 	public long id;
 	public String label;
-	public long walletId;
+	public long walletId=0;
+	public long getWalletId() {
+		return (walletId==0 ? walletId : id);
+	}
 
 }

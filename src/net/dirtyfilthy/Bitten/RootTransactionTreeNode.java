@@ -14,10 +14,10 @@ public class RootTransactionTreeNode implements TreeTableNode {
 	private ArrayList<SqlTransaction> list;
 	private ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
 	
-	RootTransactionTreeNode(ArrayList<SqlTransaction> list){
+	RootTransactionTreeNode(ControlPanel p, ArrayList<SqlTransaction> list){
 		this.list=list;
 		for(SqlTransaction t : list){
-			children.add(new TransactionTreeNode(this,t));
+			children.add(new TransactionTreeNode(this,p,t));
 		}
 	}
 	

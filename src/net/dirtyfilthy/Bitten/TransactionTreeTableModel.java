@@ -9,17 +9,21 @@ import com.google.bitcoin.core.SqlTransaction;
 
 public class TransactionTreeTableModel extends DefaultTreeTableModel {
 
+	private ControlPanel panel;
+	
 	public TransactionTreeTableModel() {
 		// TODO Auto-generated constructor stub
 	}
 
 	public TransactionTreeTableModel(TreeTableNode root) {
 		super(root);
+	
 		// TODO Auto-generated constructor stub
 	}
 
 	public TransactionTreeTableModel(TreeTableNode root, List<?> columnNames) {
 		super(root, columnNames);
+	
 		// TODO Auto-generated constructor stub
 	}
 	
