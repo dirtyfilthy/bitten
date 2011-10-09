@@ -1,5 +1,7 @@
 package net.dirtyfilthy.Bitten;
 
+import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 import javax.swing.text.html.HTMLDocument.Iterator;
@@ -53,6 +55,10 @@ public class WalletView extends Display {
 		walletEdgeTable.addColumn("target",long.class);
 		graph=new Graph(walletNodeTable, walletEdgeTable, true, "id", "source","target");
 		Node n1 = graph.addNode();
+		Node n2 = graph.addNode();
+		n1.setLong(0, 1);
+		n2.setLong(0, 2);
+		graph.addEdge(n1, n2);
 		viz=new Visualization();
 		viz.add("graph", graph);
 		// draw the "name" label for NodeItems
@@ -105,22 +111,53 @@ public class WalletView extends Display {
 	
 	public Node findOrCreateWalletNode(long id, String label){
 		System.out.println("adding node "+id);
-		Node n=graph.addNode();
+		Node n=graph.getNodeFromKey(id);
+		if(n==null){
+			n=graph.addNode();
+		}
 		n.setLong(0, id);
 		return n;
+	}
+	
+	public void removeOutputEdge(long source, long target, long amount){
+		System.out.println("Removing edge src "+source+" dst "+target+" btc "+amount);
+		Node sourceNode=graph.getNodeFromKey(source);
+		System.out.println("source node "+sourceNode);
+		Node targetNode=graph.getNodeFromKey(target);
+		Edge edge=graph.getEdge(sourceNode, targetNode);
+		long amt=edge.getLong(0);
+		amt=amt-amount;
+		if(amt>0){
+			edge.setLong(0, amt);
+		}else{
+			System.out.println("removing edge");
+			graph.removeEdge(edge);
+		}
+		if(!sourceNode.edges().hasNext()){
+			graph.removeNode(sourceNode);
+		}
+		if(!targetNode.edges().hasNext()){
+			graph.removeNode(targetNode);
+		}
+		java.util.Iterator<Edge> i=graph.edges();
+		while(i.hasNext()){
+			System.out.println("edge: "+i.next());
+		}
+		
 	}
 	
 	public Edge addOutputEdge(long source, long target, long amount){
 		System.out.println("Adding edge src "+source+" dst "+target+" btc "+amount);
 		Node sourceNode=graph.getNodeFromKey(source);
 		System.out.println("source node "+sourceNode);
-		
 		Node targetNode=graph.getNodeFromKey(target);
-		System.out.println("dst node "+targetNode);
-		System.out.println("before add edge");
-		Edge edge=graph.addEdge(sourceNode, targetNode);
-		System.out.println("after add edge");
-		edge.setLong(0, amount);
+		Edge edge=graph.getEdge(sourceNode, targetNode);
+		if(edge==null){
+			edge=graph.addEdge(sourceNode, targetNode);
+			edge.setLong(0, amount);
+		}else{
+			edge.setLong(0, edge.getLong(0)+amount);
+		}
 		java.util.Iterator<Edge> i=graph.edges();
 		while(i.hasNext()){
 			System.out.println("edge: "+i.next());
@@ -129,7 +166,29 @@ public class WalletView extends Display {
 		return edge;
 	}
 	
+	public void removeTransaction(SqlTransaction transaction){
+		synchronized(viz){
+			if(transaction.inputs.get(0).isCoinBase()){
+				return;
+			}
+		System.out.println("Removing transaction");
+		long sourceKey=((SqlTransactionInput) transaction.inputs.get(0)).getAddress().getWalletId();
+		ArrayList<Long> targetKeys=new ArrayList<Long>();
+		
+		for(TransactionOutput o: transaction.outputs){
+			SqlTransactionOutput out=(SqlTransactionOutput) o;
+			long target=out.getAddress().getWalletId();
+			removeOutputEdge(sourceKey,target, o.getValue().longValue());
+		}
+		
+		}
+		viz.run("color");
+		viz.run("layout");
+		
+	}
+	
 	public void addTransaction(SqlTransaction transaction){
+		Node srcNode;
 		synchronized(viz){
 			if(transaction.inputs.get(0).isCoinBase()){
 				return;
@@ -138,16 +197,21 @@ public class WalletView extends Display {
 		long sourceKey=((SqlTransactionInput) transaction.inputs.get(0)).getAddress().getWalletId();
 		ArrayList<Long> targetKeys=new ArrayList<Long>();
 		
-		findOrCreateWalletNode(sourceKey,"");
+		srcNode=findOrCreateWalletNode(sourceKey,"");
 		for(TransactionOutput o: transaction.outputs){
 			SqlTransactionOutput out=(SqlTransactionOutput) o;
 			long target=out.getAddress().getWalletId();
 			findOrCreateWalletNode(target,"");
 			addOutputEdge(sourceKey,target, o.getValue().longValue());
 		}
+		
 		}
 		viz.run("color");
 		viz.run("layout");
+		VisualItem vi=viz.getVisualItem("graph", srcNode);
+		System.out.println("position= "+vi.getStartX()+" "+ vi.getStartY());
+		this.animatePanToAbs(new Point2D.Double(vi.getStartX(), vi.getStartY()),500);
+		
 	}
 	
 }

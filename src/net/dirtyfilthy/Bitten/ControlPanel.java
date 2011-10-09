@@ -29,9 +29,10 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		
 	}
 	
+	
 	public void searchAddress(String address){
 		AddressSearchResultPanel results=new AddressSearchResultPanel(this,store,address);
-		this.addTab(address,results);
+		this.addTab(StringUtils.truncateText(address,8),results);
 	}
 
 	@Override
@@ -47,6 +48,9 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		if(transactionTreeNode.visible){
 			view.addTransaction(transactionTreeNode.transaction);
 			
+		}
+		else{
+			view.removeTransaction(transactionTreeNode.transaction);
 		}
 		
 	}

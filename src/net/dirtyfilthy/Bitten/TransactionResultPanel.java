@@ -42,9 +42,9 @@ public class TransactionResultPanel extends ResultSetPanel {
 			rs.close();
 			String columns[]={"id","time","from","btc","to","btc","V"};
 			
-			TreeTableModel  treeTableModel = new TransactionTreeTableModel(new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
+			TreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
-			table=new TransactionTreeTable(treeTableModel);
+			table=new TransactionTreeTable(panel, treeTableModel);
 			
 			//table=new JTable(m);
 			table.setVisible(true);
