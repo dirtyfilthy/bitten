@@ -33,6 +33,7 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	public void searchAddress(String address){
 		AddressSearchResultPanel results=new AddressSearchResultPanel(this,store,address);
 		this.addTab(StringUtils.truncateText(address,8),results);
+		setTabComponentAt(this.getTabCount()-1,new ButtonTabComponent(this));
 	}
 
 	@Override
