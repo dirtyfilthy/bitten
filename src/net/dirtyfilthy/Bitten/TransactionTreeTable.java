@@ -95,6 +95,8 @@ public class TransactionTreeTable extends JXTreeTable {
 			    		long target=((SqlTransactionOutput) o).getAddress().getWalletId();
 			    		panel.getView().highlightNodes(source,target);
 			    	}
+			    	
+			    	
 			    }
 				
 			}

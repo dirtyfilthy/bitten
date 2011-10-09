@@ -37,34 +37,34 @@ import prefuse.render.LabelRenderer;
 import prefuse.util.ColorLib;
 import prefuse.util.force.DragForce;
 import prefuse.visual.VisualItem;
+
 public class WalletView extends Display {
-	private String label="label";
+	private String label = "label";
 	private Table walletNodeTable;
 	private Table walletEdgeTable;
 	private Graph graph;
 	private Visualization viz;
 	private ArrayList<Tuple> highlightedTuples;
-	
-	
-	WalletView(){
-		this.setBackground(new Color(0,0,0));
-		int[] palette = new int[] {
-			    ColorLib.rgb(255,180,180), ColorLib.rgb(190,190,255), ColorLib.rgb(190,190,0)
-			};
-		highlightedTuples=new ArrayList<Tuple>();
-		walletNodeTable=new Table();
-		walletEdgeTable=new Table();
-		walletNodeTable.addColumn("id",long.class);
-		walletEdgeTable.addColumn("btc",long.class);
-		walletEdgeTable.addColumn("source",long.class);
-		walletEdgeTable.addColumn("target",long.class);
-		graph=new Graph(walletNodeTable, walletEdgeTable, true, "id", "source","target");
+
+	WalletView() {
+		this.setBackground(new Color(0, 0, 0));
+		int[] palette = new int[] { ColorLib.rgb(255, 180, 180),
+				ColorLib.rgb(190, 190, 255), ColorLib.rgb(190, 190, 0) };
+		highlightedTuples = new ArrayList<Tuple>();
+		walletNodeTable = new Table();
+		walletEdgeTable = new Table();
+		walletNodeTable.addColumn("id", long.class);
+		walletEdgeTable.addColumn("btc", long.class);
+		walletEdgeTable.addColumn("source", long.class);
+		walletEdgeTable.addColumn("target", long.class);
+		graph = new Graph(walletNodeTable, walletEdgeTable, true, "id",
+				"source", "target");
 		Node n1 = graph.addNode();
 		Node n2 = graph.addNode();
 		n1.setLong(0, 1);
 		n2.setLong(0, 2);
 		graph.addEdge(n1, n2);
-		viz=new Visualization();
+		viz = new Visualization();
 		viz.add("graph", graph);
 		// draw the "name" label for NodeItems
 		LabelRenderer r = new LabelRenderer("id");
@@ -72,191 +72,207 @@ public class WalletView extends Display {
 		EdgeRenderer e = new EdgeRenderer();
 		e.setArrowType(Constants.EDGE_ARROW_FORWARD);
 		e.setArrowHeadSize(8, 8);
-		
-		viz.setRendererFactory(new DefaultRendererFactory(r,e));
+
+		viz.setRendererFactory(new DefaultRendererFactory(r, e));
 		ActionList layout = new ActionList(Activity.INFINITY);
-		ForceDirectedLayout f=new ForceDirectedLayout("graph");
+		ForceDirectedLayout f = new ForceDirectedLayout("graph");
 		// f.getForceSimulator().setIntegrator(new EulerIntegrator());
 		f.getForceSimulator().addForce(new DragForce((float) 0.01));
 		layout.add(f);
-		//layout.add(new NodeLinkTreeLayout("graph"));
+		// layout.add(new NodeLinkTreeLayout("graph"));
 		layout.add(new RepaintAction());
-		
-		ColorAction fill = new ColorAction("graph.nodes", VisualItem.FILLCOLOR, ColorLib.gray(100));
-		ColorAction text = new ColorAction("graph.nodes",
-                VisualItem.TEXTCOLOR, ColorLib.gray(0));
-        // use light grey for edges
-		ColorAction stroke=new ColorAction("graph.nodes",VisualItem.STROKECOLOR,ColorLib.rgb(0,0,0));
-		stroke.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255,255,0));
-        ColorAction edges = new ColorAction("graph.edges",
-                VisualItem.STROKECOLOR, ColorLib.gray(200));
-        edges.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255,255,0));
-        ColorAction fill2 = new ColorAction("graph.edges",
-                VisualItem.FILLCOLOR, ColorLib.gray(200));
-        fill2.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255,255,0));
-        DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc");
-        
-        edgeWidth.setScale(Constants.LOG_SCALE);
-        edgeWidth.setMaximumSize(20);
-        ActionList color = new ActionList();
-        color.add(text);
-        color.add(fill);
-        color.add(fill2);
-        color.add(stroke);
-        color.add(edges);
-        color.add(edgeWidth);
+
+		ColorAction fill = new ColorAction("graph.nodes", VisualItem.FILLCOLOR,
+				ColorLib.gray(100));
+		ColorAction text = new ColorAction("graph.nodes", VisualItem.TEXTCOLOR,
+				ColorLib.gray(0));
+		// use light grey for edges
+		ColorAction stroke = new ColorAction("graph.nodes",
+				VisualItem.STROKECOLOR, ColorLib.rgb(0, 0, 0));
+		stroke.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
+		ColorAction edges = new ColorAction("graph.edges",
+				VisualItem.STROKECOLOR, ColorLib.gray(200));
+		edges.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
+		ColorAction fill2 = new ColorAction("graph.edges",
+				VisualItem.FILLCOLOR, ColorLib.gray(200));
+		fill2.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
+		DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc");
+
+		edgeWidth.setScale(Constants.LOG_SCALE);
+		edgeWidth.setMaximumSize(20);
+		ActionList color = new ActionList();
+		color.add(text);
+		color.add(fill);
+		color.add(fill2);
+		color.add(stroke);
+		color.add(edges);
+		color.add(edgeWidth);
 		viz.putAction("layout", layout);
-        viz.putAction("color", color);
+		viz.putAction("color", color);
 		setSize(720, 500); // set display size
 		setVisualization(viz);
-        
+
 		addControlListener(new DragControl()); // drag items around
-		addControlListener(new PanControl());  // pan with background left-drag
+		addControlListener(new PanControl()); // pan with background left-drag
 		addControlListener(new ZoomControl()); // zoom with vertical right-drag
 		viz.run("color");
-        // start up the animated layout
-        viz.run("layout");
-		
+		// start up the animated layout
+		viz.run("layout");
+
 	}
-	
-	public Node findOrCreateWalletNode(long id, String label){
-		System.out.println("adding node "+id);
-		Node n=graph.getNodeFromKey(id);
-		if(n==null){
-			n=graph.addNode();
+
+	public Node findOrCreateWalletNode(long id, String label) {
+		System.out.println("adding node " + id);
+		Node n = graph.getNodeFromKey(id);
+		if (n == null) {
+			n = graph.addNode();
 		}
 		n.setLong(0, id);
 		return n;
 	}
-	
-	public void removeOutputEdge(long source, long target, long amount){
-		System.out.println("Removing edge src "+source+" dst "+target+" btc "+amount);
-		Node sourceNode=graph.getNodeFromKey(source);
-		System.out.println("source node "+sourceNode);
-		Node targetNode=graph.getNodeFromKey(target);
-		Edge edge=graph.getEdge(sourceNode, targetNode);
-		long amt=edge.getLong(0);
-		amt=amt-amount;
-		if(amt>0){
+
+	public void removeOutputEdge(long source, long target, long amount) {
+		System.out.println("Removing edge src " + source + " dst " + target
+				+ " btc " + amount);
+		Node sourceNode = graph.getNodeFromKey(source);
+		System.out.println("source node " + sourceNode);
+		Node targetNode = graph.getNodeFromKey(target);
+		Edge edge = graph.getEdge(sourceNode, targetNode);
+		long amt = edge.getLong(0);
+		amt = amt - amount;
+		if (amt > 0) {
 			edge.setLong(0, amt);
-		}else{
+		} else {
 			System.out.println("removing edge");
 			graph.removeEdge(edge);
 		}
-		if(!sourceNode.edges().hasNext()){
+		if (!sourceNode.edges().hasNext()) {
 			graph.removeNode(sourceNode);
 		}
-		if(!targetNode.edges().hasNext()){
+		if (!targetNode.edges().hasNext()) {
 			graph.removeNode(targetNode);
 		}
-		java.util.Iterator<Edge> i=graph.edges();
-		while(i.hasNext()){
-			System.out.println("edge: "+i.next());
+		java.util.Iterator<Edge> i = graph.edges();
+		while (i.hasNext()) {
+			System.out.println("edge: " + i.next());
 		}
-		
+
 	}
-	
-	public Edge addOutputEdge(long source, long target, long amount){
-		System.out.println("Adding edge src "+source+" dst "+target+" btc "+amount);
-		Node sourceNode=graph.getNodeFromKey(source);
-		System.out.println("source node "+sourceNode);
-		Node targetNode=graph.getNodeFromKey(target);
-		Edge edge=graph.getEdge(sourceNode, targetNode);
-		if(edge==null){
-			edge=graph.addEdge(sourceNode, targetNode);
+
+	public Edge addOutputEdge(long source, long target, long amount) {
+		System.out.println("Adding edge src " + source + " dst " + target
+				+ " btc " + amount);
+		Node sourceNode = graph.getNodeFromKey(source);
+		System.out.println("source node " + sourceNode);
+		Node targetNode = graph.getNodeFromKey(target);
+		Edge edge = graph.getEdge(sourceNode, targetNode);
+		if (edge == null) {
+			edge = graph.addEdge(sourceNode, targetNode);
 			edge.setLong(0, amount);
-		}else{
-			edge.setLong(0, edge.getLong(0)+amount);
+		} else {
+			edge.setLong(0, edge.getLong(0) + amount);
 		}
-		java.util.Iterator<Edge> i=graph.edges();
-		while(i.hasNext()){
-			System.out.println("edge: "+i.next());
+		java.util.Iterator<Edge> i = graph.edges();
+		while (i.hasNext()) {
+			System.out.println("edge: " + i.next());
 		}
-		System.out.println("getkey "+graph.getNodeFromKey(source));
+		System.out.println("getkey " + graph.getNodeFromKey(source));
 		return edge;
 	}
-	
-	public void removeTransaction(SqlTransaction transaction){
-		synchronized(viz){
-			if(transaction.inputs.get(0).isCoinBase()){
+
+	public void removeTransaction(SqlTransaction transaction) {
+		synchronized (viz) {
+			if (transaction.inputs.get(0).isCoinBase()) {
 				return;
 			}
-		System.out.println("Removing transaction");
-		long sourceKey=((SqlTransactionInput) transaction.inputs.get(0)).getAddress().getWalletId();
-		ArrayList<Long> targetKeys=new ArrayList<Long>();
-		
-		for(TransactionOutput o: transaction.outputs){
-			SqlTransactionOutput out=(SqlTransactionOutput) o;
-			long target=out.getAddress().getWalletId();
-			removeOutputEdge(sourceKey,target, o.getValue().longValue());
-		}
-		
+			System.out.println("Removing transaction");
+			long sourceKey = ((SqlTransactionInput) transaction.inputs.get(0))
+					.getAddress().getWalletId();
+			ArrayList<Long> targetKeys = new ArrayList<Long>();
+
+			for (TransactionOutput o : transaction.outputs) {
+				SqlTransactionOutput out = (SqlTransactionOutput) o;
+				long target = out.getAddress().getWalletId();
+				removeOutputEdge(sourceKey, target, o.getValue().longValue());
+			}
+
 		}
 		viz.run("color");
 		viz.run("layout");
-		
+
 	}
-	
-	public void addTransaction(SqlTransaction transaction){
+
+	public void addTransaction(SqlTransaction transaction) {
 		Node srcNode;
-		synchronized(viz){
-			if(transaction.inputs.get(0).isCoinBase()){
+		synchronized (viz) {
+			if (transaction.inputs.get(0).isCoinBase()) {
 				return;
 			}
-		System.out.println("Adding transaction");
-		long sourceKey=((SqlTransactionInput) transaction.inputs.get(0)).getAddress().getWalletId();
-		ArrayList<Long> targetKeys=new ArrayList<Long>();
-		
-		srcNode=findOrCreateWalletNode(sourceKey,"");
-		for(TransactionOutput o: transaction.outputs){
-			SqlTransactionOutput out=(SqlTransactionOutput) o;
-			long target=out.getAddress().getWalletId();
-			findOrCreateWalletNode(target,"");
-			addOutputEdge(sourceKey,target, o.getValue().longValue());
-		} 
-		
+			System.out.println("Adding transaction");
+			long sourceKey = ((SqlTransactionInput) transaction.inputs.get(0))
+					.getAddress().getWalletId();
+			ArrayList<Long> targetKeys = new ArrayList<Long>();
+
+			srcNode = findOrCreateWalletNode(sourceKey, "");
+			for (TransactionOutput o : transaction.outputs) {
+				SqlTransactionOutput out = (SqlTransactionOutput) o;
+				long target = out.getAddress().getWalletId();
+				findOrCreateWalletNode(target, "");
+				addOutputEdge(sourceKey, target, o.getValue().longValue());
+				highlightNodes(sourceKey,target);
+			}
+
 		}
 		viz.run("color");
 		viz.run("layout");
-		VisualItem vi=viz.getVisualItem("graph", srcNode);
-		System.out.println("position= "+vi.getStartX()+" "+ vi.getStartY());
-		this.animatePanToAbs(new Point2D.Double(vi.getStartX(), vi.getStartY()),500);
-		
+		panToNode(srcNode);
+
 	}
 	
-	public void clearHighlights(){
-		for(Tuple t : highlightedTuples){
-			try{
-				VisualItem vi=viz.getVisualItem("graph",t);
+	public void panToNodeId(long id){
+		Node n=graph.getNodeFromKey(id);
+		panToNode(n);
+	}
+	
+	public void panToNode(Node n){
+	
+		VisualItem vi = viz.getVisualItem("graph", n);
+		this.animatePanToAbs(
+				new Point2D.Double(vi.getStartX(), vi.getStartY()), 500);
+	}
+
+	public void clearHighlights() {
+		for (Tuple t : highlightedTuples) {
+			try {
+				VisualItem vi = viz.getVisualItem("graph", t);
 				vi.setHighlighted(false);
-			}
-			catch(NullPointerException e){
+			} catch (NullPointerException e) {
 				continue;
 			}
 		}
 		highlightedTuples.clear();
 	}
-	
-	public void highlightTuple(Tuple t){
+
+	public void highlightTuple(Tuple t) {
 		highlightedTuples.add(t);
-		viz.getVisualItem("graph",t).setHighlighted(true);
+		viz.getVisualItem("graph", t).setHighlighted(true);
 	}
 
 	public void highlightNodes(long source, long target) {
-		Node sourceNode=graph.getNodeFromKey(source);
-		Node targetNode=graph.getNodeFromKey(target);
-		if(targetNode==null || sourceNode==null){
+		Node sourceNode = graph.getNodeFromKey(source);
+		Node targetNode = graph.getNodeFromKey(target);
+		if (targetNode == null || sourceNode == null) {
 			viz.run("color");
 			return;
 		}
 		System.out.println("setting highlight");
 		highlightTuple(sourceNode);
 		highlightTuple(targetNode);
-		Edge e=graph.getEdge(sourceNode, targetNode);
-		if(e!=null){
+		Edge e = graph.getEdge(sourceNode, targetNode);
+		if (e != null) {
 			highlightTuple(e);
 		}
 		viz.run("color");
 	}
-	
+
 }
