@@ -6,6 +6,8 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JCheckBox;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreePath;
@@ -17,6 +19,10 @@ import org.jdesktop.swingx.renderer.StringValues;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
 import com.google.bitcoin.core.SqlTransaction;
+import com.google.bitcoin.core.SqlTransactionInput;
+import com.google.bitcoin.core.SqlTransactionOutput;
+import com.google.bitcoin.core.TransactionInput;
+import com.google.bitcoin.core.TransactionOutput;
 
 public class TransactionTreeTable extends JXTreeTable {
 
@@ -56,7 +62,46 @@ public class TransactionTreeTable extends JXTreeTable {
 		        }
 		       
 		    }
+		    
 		});
+		this.addTreeSelectionListener(new TreeSelectionListener(){
+			
+			public void valueChanged(TreeSelectionEvent e){
+				System.out.println("selection event "+e);
+				Object obj=e.getPath().getLastPathComponent();
+				if(obj instanceof TransactionRowTreeNode){
+			    	TransactionRowTreeNode n=(TransactionRowTreeNode) obj;
+			    	SqlTransactionInput input=(SqlTransactionInput) ((TransactionTreeNode) n.getParent()).transaction.inputs.get(0);
+			    	if(input.isCoinBase() || n.output==null){
+			    		return;
+			    	}
+			    	long source=input.getAddress().getWalletId();
+			    	long target=n.output.getAddress().getWalletId();
+			    	System.out.println("highlighting nodes "+source+" "+target);
+			    	panel.getView().clearHighlights();
+			    	panel.getView().highlightNodes(source,target);
+			    }
+				else if(obj instanceof TransactionTreeNode){
+			    	TransactionTreeNode n=(TransactionTreeNode) obj;
+			    	
+			    	
+			    	SqlTransactionInput in=(SqlTransactionInput) n.transaction.inputs.get(0);
+			    	if(in.isCoinBase()){
+			    		return;
+			    	}
+			    	panel.getView().clearHighlights();
+			    	long source=in.getAddress().getWalletId();
+			    	for(TransactionOutput o : n.transaction.outputs){
+			    		long target=((SqlTransactionOutput) o).getAddress().getWalletId();
+			    		panel.getView().highlightNodes(source,target);
+			    	}
+			    }
+				
+			}
+			
+			
+		});
+		
 	}
 	
 	

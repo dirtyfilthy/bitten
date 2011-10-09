@@ -11,6 +11,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import org.jdesktop.swingx.JXTreeTable;
+import org.jdesktop.swingx.rollover.RolloverController;
 import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
@@ -45,9 +46,10 @@ public class TransactionResultPanel extends ResultSetPanel {
 			TreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
 			table=new TransactionTreeTable(panel, treeTableModel);
-			
+			RolloverController controller = new HighlightRolloverController(panel.getView());
 			//table=new JTable(m);
 			table.setVisible(true);
+			//controller.install(table);
 			this.add(new JScrollPane(table));
 			table.getModel().addTableModelListener(panel);
 		} catch (SQLException e) {

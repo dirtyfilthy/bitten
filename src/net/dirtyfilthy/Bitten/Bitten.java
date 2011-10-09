@@ -2,9 +2,12 @@ package net.dirtyfilthy.Bitten;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Toolkit;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
+import javax.swing.UIManager;
 
 import java.awt.BorderLayout;
 import java.io.File;
@@ -30,6 +33,16 @@ public class Bitten {
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		Toolkit.getDefaultToolkit().setDynamicLayout(true);
+		System.setProperty("sun.awt.noerasebackground", "true");
+		JFrame.setDefaultLookAndFeelDecorated(true);
+		JDialog.setDefaultLookAndFeelDecorated(true);
+
+		try {
+		    UIManager.setLookAndFeel("de.muntjak.tinylookandfeel.TinyLookAndFeel");
+		} catch(Exception ex) {
+		    ex.printStackTrace();
+		}
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {

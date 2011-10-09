@@ -1,5 +1,6 @@
 package net.dirtyfilthy.Bitten;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import prefuse.data.Edge;
 import prefuse.data.Graph;
 import prefuse.data.Node;
 import prefuse.data.Table;
+import prefuse.data.Tuple;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.EdgeRenderer;
 import prefuse.render.LabelRenderer;
@@ -41,12 +43,15 @@ public class WalletView extends Display {
 	private Table walletEdgeTable;
 	private Graph graph;
 	private Visualization viz;
+	private ArrayList<Tuple> highlightedTuples;
+	
 	
 	WalletView(){
+		this.setBackground(new Color(0,0,0));
 		int[] palette = new int[] {
 			    ColorLib.rgb(255,180,180), ColorLib.rgb(190,190,255), ColorLib.rgb(190,190,0)
 			};
-		
+		highlightedTuples=new ArrayList<Tuple>();
 		walletNodeTable=new Table();
 		walletEdgeTable=new Table();
 		walletNodeTable.addColumn("id",long.class);
@@ -81,10 +86,14 @@ public class WalletView extends Display {
 		ColorAction text = new ColorAction("graph.nodes",
                 VisualItem.TEXTCOLOR, ColorLib.gray(0));
         // use light grey for edges
+		ColorAction stroke=new ColorAction("graph.nodes",VisualItem.STROKECOLOR,ColorLib.rgb(0,0,0));
+		stroke.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255,255,0));
         ColorAction edges = new ColorAction("graph.edges",
                 VisualItem.STROKECOLOR, ColorLib.gray(200));
+        edges.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255,255,0));
         ColorAction fill2 = new ColorAction("graph.edges",
                 VisualItem.FILLCOLOR, ColorLib.gray(200));
+        fill2.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255,255,0));
         DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc");
         
         edgeWidth.setScale(Constants.LOG_SCALE);
@@ -93,6 +102,7 @@ public class WalletView extends Display {
         color.add(text);
         color.add(fill);
         color.add(fill2);
+        color.add(stroke);
         color.add(edges);
         color.add(edgeWidth);
 		viz.putAction("layout", layout);
@@ -203,7 +213,7 @@ public class WalletView extends Display {
 			long target=out.getAddress().getWalletId();
 			findOrCreateWalletNode(target,"");
 			addOutputEdge(sourceKey,target, o.getValue().longValue());
-		}
+		} 
 		
 		}
 		viz.run("color");
@@ -212,6 +222,41 @@ public class WalletView extends Display {
 		System.out.println("position= "+vi.getStartX()+" "+ vi.getStartY());
 		this.animatePanToAbs(new Point2D.Double(vi.getStartX(), vi.getStartY()),500);
 		
+	}
+	
+	public void clearHighlights(){
+		for(Tuple t : highlightedTuples){
+			try{
+				VisualItem vi=viz.getVisualItem("graph",t);
+				vi.setHighlighted(false);
+			}
+			catch(NullPointerException e){
+				continue;
+			}
+		}
+		highlightedTuples.clear();
+	}
+	
+	public void highlightTuple(Tuple t){
+		highlightedTuples.add(t);
+		viz.getVisualItem("graph",t).setHighlighted(true);
+	}
+
+	public void highlightNodes(long source, long target) {
+		Node sourceNode=graph.getNodeFromKey(source);
+		Node targetNode=graph.getNodeFromKey(target);
+		if(targetNode==null || sourceNode==null){
+			viz.run("color");
+			return;
+		}
+		System.out.println("setting highlight");
+		highlightTuple(sourceNode);
+		highlightTuple(targetNode);
+		Edge e=graph.getEdge(sourceNode, targetNode);
+		if(e!=null){
+			highlightTuple(e);
+		}
+		viz.run("color");
 	}
 	
 }

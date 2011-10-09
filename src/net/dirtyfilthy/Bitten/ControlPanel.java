@@ -53,6 +53,10 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 			view.removeTransaction(transactionTreeNode.transaction);
 		}
 		
+	} 
+
+	public WalletView getView() {
+		return view;
 	}
 
 	
