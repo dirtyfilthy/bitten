@@ -1,6 +1,6 @@
 package com.google.bitcoin.core;
 
-public class SqlAddress extends Address {
+public class SqlAddress extends Address implements Accountable {
 
 	public SqlAddress(NetworkParameters params, byte[] hash160) {
 		super(params, hash160);
@@ -18,6 +18,18 @@ public class SqlAddress extends Address {
 	public long walletId=0;
 	public long getWalletId() {
 		return (walletId==0 ? id : walletId);
+	}
+
+	@Override
+	public long incomingAmount(SqlTransaction t) {
+		// TODO Auto-generated method stub
+		return t.incomingAmountForAddress(this);
+	}
+
+	@Override
+	public long outgoingAmount(SqlTransaction t) {
+		// TODO Auto-generated method stub
+		return t.outgoingAmountForAddress(this);
 	}
 
 }

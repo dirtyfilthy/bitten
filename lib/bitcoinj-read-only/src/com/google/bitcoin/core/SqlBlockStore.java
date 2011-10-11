@@ -311,6 +311,28 @@ public class SqlBlockStore implements BlockStore {
 		addressMap.put(address,id);
 		return id;
 	}
+	
+	public synchronized SqlAddress findAddressByHash(String hash){
+		try {
+			SqlAddress a;
+			findAddressByHashStatement.setString(1, hash);
+			ResultSet rs = findAddressByHashStatement.executeQuery();
+			if(rs.next()){
+				a=loadAddressResultSet(rs);
+				rs.close();
+				return a;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (AddressFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+		
+		
+	}
 
 	public SqlFullStoredBlock loadBlockFromResultSet(ResultSet rs) {
 		try {

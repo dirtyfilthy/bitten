@@ -18,6 +18,8 @@ public class TransactionNode {
 		id=transaction_id;
 	}
 	
+	
+	
 	public boolean equals(Object rhs){
 		return (rhs==this || ((rhs instanceof TransactionNode) && ((TransactionNode) rhs).type==this.type && ((TransactionNode) rhs).id==this.id));
 	}

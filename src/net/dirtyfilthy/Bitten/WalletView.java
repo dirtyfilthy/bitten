@@ -55,8 +55,10 @@ public class WalletView extends Display {
 		walletEdgeTable = new Table();
 		walletNodeTable.addColumn("id", long.class);
 		walletEdgeTable.addColumn("btc", long.class);
+		
 		walletEdgeTable.addColumn("source", long.class);
 		walletEdgeTable.addColumn("target", long.class);
+		walletEdgeTable.addColumn("btc_d", double.class);
 		graph = new Graph(walletNodeTable, walletEdgeTable, true, "id",
 				"source", "target");
 		Node n1 = graph.addNode();
@@ -69,9 +71,9 @@ public class WalletView extends Display {
 		// draw the "name" label for NodeItems
 		LabelRenderer r = new LabelRenderer("id");
 		r.setRoundedCorner(8, 8); // round the corners
-		EdgeRenderer e = new EdgeRenderer();
+		EdgeRenderer e = new EdgeRenderer(Constants.EDGE_TYPE_CURVE);
 		e.setArrowType(Constants.EDGE_ARROW_FORWARD);
-		e.setArrowHeadSize(8, 8);
+		e.setArrowHeadSize(10, 10);
 
 		viz.setRendererFactory(new DefaultRendererFactory(r, e));
 		ActionList layout = new ActionList(Activity.INFINITY);
@@ -96,7 +98,7 @@ public class WalletView extends Display {
 		ColorAction fill2 = new ColorAction("graph.edges",
 				VisualItem.FILLCOLOR, ColorLib.gray(200));
 		fill2.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
-		DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc");
+		DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc_d");
 
 		edgeWidth.setScale(Constants.LOG_SCALE);
 		edgeWidth.setMaximumSize(20);
@@ -115,6 +117,7 @@ public class WalletView extends Display {
 		addControlListener(new DragControl()); // drag items around
 		addControlListener(new PanControl()); // pan with background left-drag
 		addControlListener(new ZoomControl()); // zoom with vertical right-drag
+		this.setHighQuality(true);
 		viz.run("color");
 		// start up the animated layout
 		viz.run("layout");
@@ -142,6 +145,8 @@ public class WalletView extends Display {
 		amt = amt - amount;
 		if (amt > 0) {
 			edge.setLong(0, amt);
+			edge.setDouble(3, Utils.btcToDouble(amt));
+			
 		} else {
 			System.out.println("removing edge");
 			graph.removeEdge(edge);
@@ -169,7 +174,9 @@ public class WalletView extends Display {
 		if (edge == null) {
 			edge = graph.addEdge(sourceNode, targetNode);
 			edge.setLong(0, amount);
+			edge.setDouble(3, Utils.btcToDouble(amount));
 		} else {
+			edge.setDouble(3, Utils.btcToDouble(edge.getLong(0) + amount));
 			edge.setLong(0, edge.getLong(0) + amount);
 		}
 		java.util.Iterator<Edge> i = graph.edges();

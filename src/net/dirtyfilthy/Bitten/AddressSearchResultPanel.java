@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 import javax.swing.JPanel;
 
+import com.google.bitcoin.core.SqlAddress;
 import com.google.bitcoin.core.SqlBlockStore;
 
 public class AddressSearchResultPanel extends JPanel {
@@ -17,7 +18,9 @@ public class AddressSearchResultPanel extends JPanel {
 			PreparedStatement query=store.prepareStatement(SQL);
 			query.setString(1, address.trim());
 			query.setString(2, address.trim());
+			SqlAddress a=store.findAddressByHash(address.trim());
 			results=new TransactionResultPanel(p, store, query);
+			results.targetAddress=a;
 			results.setVisible(true);
 			this.add(results);
 			results.execute();

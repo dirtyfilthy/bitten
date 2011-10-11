@@ -225,7 +225,9 @@ public class Utils {
         byte[] buf = new byte[length];
         System.arraycopy(mpi, 4, buf, 0, length);
         return new BigInteger(buf);
-    }
+    } 
+    
+    
 
     // The representation of nBits uses another home-brew encoding, as a way to represent a large
     // hash value in only 32 bits.
@@ -238,4 +240,11 @@ public class Utils {
         if (size >= 3) bytes[6] = (byte) ((compact >>  0) & 0xFF);
         return decodeMPI(bytes);
     }
+    
+    public static double btcToDouble(long btc){
+    	return ((double) btc)/((double) 100000000);
+    	
+    }
 }
+
+

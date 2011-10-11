@@ -2,6 +2,7 @@ package net.dirtyfilthy.Bitten;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Frame;
 import java.awt.Toolkit;
 
 import javax.swing.JDialog;
@@ -75,7 +76,7 @@ public class Bitten {
 	private void initialize() throws SQLException {
 		
 		frame = new JFrame();
-		frame.setBounds(100, 100, 546, 381);
+		frame.setExtendedState(Frame.MAXIMIZED_BOTH);  
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		// frame.getContentPane().setLayout(new BorderLayout(0, 0));
 		
@@ -94,8 +95,8 @@ public class Bitten {
                     view, panel);
 			splitPane.setVisible(true);
 			splitPane.setOneTouchExpandable(true);
-			splitPane.setDividerLocation(150);
-			Dimension minimumSize = new Dimension(100, 50);
+			splitPane.setResizeWeight(1.0);
+			Dimension minimumSize = new Dimension(550, 500);
 			panel.setMinimumSize(minimumSize);
 		frame.getContentPane().add(splitPane, BorderLayout.CENTER);;
 		 frame.pack();           // layout components in window

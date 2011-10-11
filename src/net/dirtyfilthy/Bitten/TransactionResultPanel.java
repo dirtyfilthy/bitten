@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.swing.BoxLayout;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -15,22 +16,30 @@ import org.jdesktop.swingx.rollover.RolloverController;
 import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
+import com.google.bitcoin.core.SqlAddress;
 import com.google.bitcoin.core.SqlBlockStore;
 import com.google.bitcoin.core.SqlTransaction;
+import com.google.bitcoin.core.SqlTransactionOutput;
+import com.google.bitcoin.core.TransactionOutput;
 
 public class TransactionResultPanel extends ResultSetPanel {
 	protected ArrayList<SqlTransaction> transactions;
 	protected SqlBlockStore store;
-	protected JTable table;
+	protected JXTreeTable table;
 	protected ControlPanel panel;
+	protected TransactionInfoPanel info;
+	public SqlAddress targetAddress;
 	
 	TransactionResultPanel(ControlPanel p,SqlBlockStore s,PreparedStatement query){
 		super();
 		this.query=query;
 		this.store=s;
 		this.panel=p;
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		transactions=new ArrayList<SqlTransaction>();
 	}
+	
+
 	
 	@Override
 	protected void processResultSet(ResultSet rs) {
@@ -45,7 +54,12 @@ public class TransactionResultPanel extends ResultSetPanel {
 			
 			TreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
+			info=new TransactionInfoPanel(targetAddress, transactions);
+			this.add(info);
+			
 			table=new TransactionTreeTable(panel, treeTableModel);
+			table.setTreeCellRenderer(new AddressTreeCellRenderer(targetAddress));
+			
 			RolloverController controller = new HighlightRolloverController(panel.getView());
 			//table=new JTable(m);
 			table.setVisible(true);
