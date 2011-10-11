@@ -28,6 +28,7 @@ public class TransactionResultPanel extends ResultSetPanel {
 	protected JXTreeTable table;
 	protected ControlPanel panel;
 	protected TransactionInfoPanel info;
+	protected TransactionOptionsPanel options;
 	public SqlAddress targetAddress;
 	
 	TransactionResultPanel(ControlPanel p,SqlBlockStore s,PreparedStatement query){
@@ -52,11 +53,12 @@ public class TransactionResultPanel extends ResultSetPanel {
 			rs.close();
 			String columns[]={"id","time","from","btc","to","btc","V"};
 			
-			TreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
+			TransactionTreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
 			info=new TransactionInfoPanel(targetAddress, transactions);
 			this.add(info);
-			
+			options=new TransactionOptionsPanel(targetAddress, treeTableModel);
+			this.add(options);
 			table=new TransactionTreeTable(panel, treeTableModel);
 			table.setTreeCellRenderer(new AddressTreeCellRenderer(targetAddress));
 			

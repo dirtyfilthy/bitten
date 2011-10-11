@@ -5,6 +5,7 @@ import java.util.List;
 import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
+import com.google.bitcoin.core.Accountable;
 import com.google.bitcoin.core.SqlTransaction;
 
 public class TransactionTreeTableModel extends DefaultTreeTableModel {
@@ -43,6 +44,32 @@ public class TransactionTreeTableModel extends DefaultTreeTableModel {
 			}
 			return false;
 		}
+
+	public void setIncomingVisible(Accountable target, boolean b) {
+		int count=this.getRoot().getChildCount();
+		int i=0;
+		for(i=0;i<count;i++){
+			TransactionTreeNode t=(TransactionTreeNode) this.getRoot().getChildAt(i);
+			if(target.incomingAmount(t.transaction)>target.outgoingAmount(t.transaction)){
+				System.out.println("setting value to "+b);
+				t.setValueAt(b,6);
+			}
+		}
+		
+	}
+	
+	public void setOutgoingVisible(Accountable target, boolean b) {
+		int count=this.getRoot().getChildCount();
+		int i=0;
+		for(i=0;i<count;i++){
+			TransactionTreeNode t=(TransactionTreeNode) this.getRoot().getChildAt(i);
+			if(target.incomingAmount(t.transaction)<=target.outgoingAmount(t.transaction)){
+				System.out.println("setting value to "+b);
+				t.setValueAt(b,6);
+			}
+		}
+		
+	}
 
 
 }

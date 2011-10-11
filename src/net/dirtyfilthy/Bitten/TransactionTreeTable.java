@@ -18,6 +18,7 @@ import org.jdesktop.swingx.renderer.DefaultTableRenderer;
 import org.jdesktop.swingx.renderer.StringValues;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
+import com.google.bitcoin.core.Accountable;
 import com.google.bitcoin.core.SqlTransaction;
 import com.google.bitcoin.core.SqlTransactionInput;
 import com.google.bitcoin.core.SqlTransactionOutput;
@@ -105,6 +106,8 @@ public class TransactionTreeTable extends JXTreeTable {
 		});
 		
 	}
+
+	
 	
 	
 
