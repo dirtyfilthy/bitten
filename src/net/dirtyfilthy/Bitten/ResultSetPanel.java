@@ -4,28 +4,34 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
+import com.google.bitcoin.core.SqlBlockStore;
+import com.google.bitcoin.core.SqlTransaction;
 
 public abstract class ResultSetPanel extends JPanel implements PropertyChangeListener{
 	
 	protected SearchBlockStoreTask task;
 	protected PreparedStatement query;
 	protected JProgressBar progress;
+	protected SqlBlockStore store;
 	
 	ResultSetPanel(){
 		
 	}
 	
-	ResultSetPanel(PreparedStatement query){
+	ResultSetPanel(SqlBlockStore store, PreparedStatement query){
 		this.query=query;
+		this.store=store;
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent arg0) {
 		if(arg0.getPropertyName().equals("resultset")){
-			processResultSet((ResultSet) arg0.getNewValue());
+			processResultSet((ArrayList<SqlTransaction>) arg0.getNewValue());
 		}
 		progress.setVisible(false);
 		
@@ -39,11 +45,11 @@ public abstract class ResultSetPanel extends JPanel implements PropertyChangeLis
 	
 	public void execute(){
 		createStatusBar();
-		task=new SearchBlockStoreTask(query,"resultset");
+		task=new SearchBlockStoreTask(store, query,"resultset");
 		task.addPropertyChangeListener(this);
 		task.execute();
 	}
 	
-	protected abstract void processResultSet(ResultSet r);
+	protected abstract void processResultSet(ArrayList<SqlTransaction> r);
 
 }

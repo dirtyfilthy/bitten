@@ -31,6 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.dirtyfilthy.Bitten.WalletStore;
+
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
@@ -64,6 +66,7 @@ public class SqlBlockStore implements BlockStore {
 	private SqlFullStoredBlock chainHead = null;
 	private Connection sqliteDatabase;
 	private NetworkParameters networkParameters;
+	private WalletStore walletStore;
 	
 
 	private BigInteger chainWork;
@@ -81,11 +84,12 @@ public class SqlBlockStore implements BlockStore {
 	private static final String FIND_BLOCK_BY_CHAIN_HEAD_SQL = "SELECT blocks.* FROM chain_head LEFT JOIN blocks ON chain_head.block_id=blocks.id WHERE blocks.id IS NOT NULL LIMIT 1";
 	private static final String UPDATE_CHAIN_HEAD_SQL = "UPDATE chain_head SET block_id=?";
 	private static final String INSERT_ADDRESS_SQL = "INSERT INTO addresses (base58hash) VALUES (?)";
+	private static final String FIND_WALLET_SQL = "SELECT * FROM addresses WHERE wallet_id=? OR address_id = ?";
 	private static final String FIND_ADDRESS_BY_HASH_SQL = "SELECT * FROM addresses WHERE base58hash=? LIMIT 1";
 
 	public SqlBlockStore(NetworkParameters params, File file) {
 		networkParameters = params;
-
+		this.walletStore=new WalletStore(this);
 		// Insert the genesis block.
 		try {
 			boolean newDb = !file.exists();
@@ -161,6 +165,10 @@ public class SqlBlockStore implements BlockStore {
 		return t;
 	}
 	
+	public WalletStore walletStore(){
+		return walletStore;
+	}
+	
 	public ArrayList<SqlTransactionOutput> loadTransactionOutputsFromSql(String sql) throws SQLException{
 		ArrayList list=new ArrayList<SqlTransactionOutput>();
 		ResultSet rs=sqliteDatabase.createStatement().executeQuery(sql);
@@ -194,6 +202,64 @@ public class SqlBlockStore implements BlockStore {
 		a.walletId = rs.getLong(3);
 		a.label = rs.getString(4);
 		return a;
+	}
+	
+	public SqlWallet loadWalletFromResultSet(ResultSet rs){
+		SqlWallet wallet=new SqlWallet();
+		try {
+			while(rs.next()){
+				wallet.addresses.add(loadAddressResultSet(rs));
+			}
+		} catch (SQLException e) {
+			
+		} catch (AddressFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return wallet;
+		
+	}
+	
+	public ArrayList<SqlWallet> loadWalletsFromAddresses(ArrayList<SqlAddress> addresses){
+		ArrayList<SqlWallet> wallets=new ArrayList<SqlWallet>();
+		HashMap<Long,SqlWallet> map=new HashMap<Long,SqlWallet>();
+		StringBuilder builder = new StringBuilder();
+		
+		 for (int i = 0; i < addresses.size();) {
+		        builder.append(addresses.get(i).getWalletId());
+		        if (++i < addresses.size()) {
+		            builder.append(",");
+		        }
+		    }
+		 PreparedStatement p;
+		try {
+			p = sqliteDatabase.prepareStatement("SELECT DISTINCT addresses.* from addresses WHERE COALESCE(wallet_id,id) IN("+builder.toString()+")");
+		
+		 ResultSet rs=p.executeQuery();
+		 SqlAddress a;
+		 while(rs.next()){
+			 a=loadAddressResultSet(rs);
+			 if(map.containsKey(a.walletId)){
+				 map.get(a.getWalletId()).addresses.add(a);
+			 }else{
+				 SqlWallet w=new SqlWallet();
+				 w.addresses.add(a);
+				 map.put(a.getWalletId(),w);
+			 }
+		 }
+		 rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (AddressFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		 for(SqlWallet w : map.values()){
+			 wallets.add(w);
+		 }
+		
+		 return wallets;
 	}
 	
 

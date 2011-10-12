@@ -24,7 +24,6 @@ import com.google.bitcoin.core.TransactionOutput;
 
 public class TransactionResultPanel extends ResultSetPanel {
 	protected ArrayList<SqlTransaction> transactions;
-	protected SqlBlockStore store;
 	protected JXTreeTable table;
 	protected ControlPanel panel;
 	protected TransactionInfoPanel info;
@@ -43,21 +42,17 @@ public class TransactionResultPanel extends ResultSetPanel {
 
 	
 	@Override
-	protected void processResultSet(ResultSet rs) {
+	protected void processResultSet(ArrayList<SqlTransaction> transactions) {
 		System.out.println("process transactions");
-		try {
-			while(rs.next()){
-				transactions.add(store.loadTransactionFromResultSet(rs));
-				System.out.println("add transaction");
-			};
-			rs.close();
+	
+			
 			String columns[]={"id","time","from","btc","to","btc","V"};
 			
 			TransactionTreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
 			info=new TransactionInfoPanel(targetAddress, transactions);
 			this.add(info);
-			options=new TransactionOptionsPanel(targetAddress, treeTableModel);
+			options=new TransactionOptionsPanel(panel,targetAddress, treeTableModel);
 			this.add(options);
 			table=new TransactionTreeTable(panel, treeTableModel);
 			table.setTreeCellRenderer(new AddressTreeCellRenderer(targetAddress));
@@ -68,10 +63,7 @@ public class TransactionResultPanel extends ResultSetPanel {
 			//controller.install(table);
 			this.add(new JScrollPane(table));
 			table.getModel().addTableModelListener(panel);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 		
 		
 		

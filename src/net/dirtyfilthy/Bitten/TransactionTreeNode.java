@@ -137,8 +137,10 @@ public class TransactionTreeNode implements TreeTableNode {
 	public void setValueAt(Object arg0, int arg1) {
 		// TODO Auto-generated method stub
 				if(arg1==6){
-					visible=(Boolean) arg0;
-					panel.notifyVisibilityChange(this);
+					if(visible!=((Boolean) arg0)){
+						visible=(Boolean) arg0;
+						panel.notifyVisibilityChange(this);
+					}
 				}
 				
 

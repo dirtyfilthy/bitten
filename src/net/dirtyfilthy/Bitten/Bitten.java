@@ -87,7 +87,7 @@ public class Bitten {
 		blockChain=new BlockChain(Bitten.networkParameters,wallet,getBlockStore());
 		SqlBlockStore store= (SqlBlockStore) getBlockStore();
 		 lblStatusBar = new StatusBar(blockChain);
-		final WalletView view=new WalletView();
+		final WalletView view=new WalletView(store.walletStore());
 		frame.getContentPane().add(lblStatusBar, BorderLayout.SOUTH);
 		ControlPanel panel=new ControlPanel(store,view);
 

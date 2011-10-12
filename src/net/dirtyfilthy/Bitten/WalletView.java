@@ -3,15 +3,18 @@ package net.dirtyfilthy.Bitten;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import javax.swing.text.html.HTMLDocument.Iterator;
 
+import com.google.bitcoin.core.SqlAddress;
 import com.google.bitcoin.core.SqlTransaction;
 import com.google.bitcoin.core.SqlTransactionInput;
 import com.google.bitcoin.core.SqlTransactionOutput;
 import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.WalletIdable;
 
 import prefuse.Constants;
 import prefuse.Display;
@@ -26,6 +29,7 @@ import prefuse.activity.Activity;
 import prefuse.controls.DragControl;
 import prefuse.controls.PanControl;
 import prefuse.controls.ZoomControl;
+import prefuse.controls.ZoomToFitControl;
 import prefuse.data.Edge;
 import prefuse.data.Graph;
 import prefuse.data.Node;
@@ -45,8 +49,10 @@ public class WalletView extends Display {
 	private Graph graph;
 	private Visualization viz;
 	private ArrayList<Tuple> highlightedTuples;
+	private WalletStore walletStore;
 
-	WalletView() {
+	WalletView(WalletStore s) {
+		walletStore=s;
 		this.setBackground(new Color(0, 0, 0));
 		int[] palette = new int[] { ColorLib.rgb(255, 180, 180),
 				ColorLib.rgb(190, 190, 255), ColorLib.rgb(190, 190, 0) };
@@ -54,6 +60,7 @@ public class WalletView extends Display {
 		walletNodeTable = new Table();
 		walletEdgeTable = new Table();
 		walletNodeTable.addColumn("id", long.class);
+		walletNodeTable.addColumn("label", String.class);
 		walletEdgeTable.addColumn("btc", long.class);
 		
 		walletEdgeTable.addColumn("source", long.class);
@@ -69,7 +76,7 @@ public class WalletView extends Display {
 		viz = new Visualization();
 		viz.add("graph", graph);
 		// draw the "name" label for NodeItems
-		LabelRenderer r = new LabelRenderer("id");
+		LabelRenderer r = new LabelRenderer("label");
 		r.setRoundedCorner(8, 8); // round the corners
 		EdgeRenderer e = new EdgeRenderer(Constants.EDGE_TYPE_CURVE);
 		e.setArrowType(Constants.EDGE_ARROW_FORWARD);
@@ -87,7 +94,7 @@ public class WalletView extends Display {
 		ColorAction fill = new ColorAction("graph.nodes", VisualItem.FILLCOLOR,
 				ColorLib.gray(100));
 		ColorAction text = new ColorAction("graph.nodes", VisualItem.TEXTCOLOR,
-				ColorLib.gray(0));
+			ColorLib.gray(0));
 		// use light grey for edges
 		ColorAction stroke = new ColorAction("graph.nodes",
 				VisualItem.STROKECOLOR, ColorLib.rgb(0, 0, 0));
@@ -111,12 +118,12 @@ public class WalletView extends Display {
 		color.add(edgeWidth);
 		viz.putAction("layout", layout);
 		viz.putAction("color", color);
-		setSize(720, 500); // set display size
 		setVisualization(viz);
 
 		addControlListener(new DragControl()); // drag items around
 		addControlListener(new PanControl()); // pan with background left-drag
 		addControlListener(new ZoomControl()); // zoom with vertical right-drag
+		addControlListener(new ZoomToFitControl()); // zoom with vertical right-drag
 		this.setHighQuality(true);
 		viz.run("color");
 		// start up the animated layout
@@ -124,16 +131,19 @@ public class WalletView extends Display {
 
 	}
 
-	public Node findOrCreateWalletNode(long id, String label) {
+	public Node findOrCreateWalletNode(long id) {
 		System.out.println("adding node " + id);
 		Node n = graph.getNodeFromKey(id);
 		if (n == null) {
 			n = graph.addNode();
 		}
+		System.out.println(walletStore);
+		label=walletStore.findById(id).label();
 		n.setLong(0, id);
+		n.setString(1, label);
 		return n;
 	}
-
+	
 	public void removeOutputEdge(long source, long target, long amount) {
 		System.out.println("Removing edge src " + source + " dst " + target
 				+ " btc " + amount);
@@ -219,21 +229,18 @@ public class WalletView extends Display {
 			long sourceKey = ((SqlTransactionInput) transaction.inputs.get(0))
 					.getAddress().getWalletId();
 			ArrayList<Long> targetKeys = new ArrayList<Long>();
-
-			srcNode = findOrCreateWalletNode(sourceKey, "");
+		
+			srcNode = findOrCreateWalletNode(sourceKey);
 			for (TransactionOutput o : transaction.outputs) {
 				SqlTransactionOutput out = (SqlTransactionOutput) o;
 				long target = out.getAddress().getWalletId();
-				findOrCreateWalletNode(target, "");
+				findOrCreateWalletNode(target);
 				addOutputEdge(sourceKey, target, o.getValue().longValue());
 				highlightNodes(sourceKey,target);
 			}
 
 		}
 		viz.run("color");
-		viz.run("layout");
-		panToNode(srcNode);
-
 	}
 	
 	public void panToNodeId(long id){
@@ -244,8 +251,14 @@ public class WalletView extends Display {
 	public void panToNode(Node n){
 	
 		VisualItem vi = viz.getVisualItem("graph", n);
+		Rectangle2D bounds=vi.getBounds();
 		this.animatePanToAbs(
-				new Point2D.Double(vi.getStartX(), vi.getStartY()), 500);
+				new Point2D.Double(bounds.getCenterX(), bounds.getCenterY()), 500);
+	
+	}
+	
+	public void panToAddress(SqlAddress a){
+		panToNodeId(a.getWalletId());
 	}
 
 	public void clearHighlights() {
@@ -280,6 +293,11 @@ public class WalletView extends Display {
 			highlightTuple(e);
 		}
 		viz.run("color");
+	}
+
+	public void panToWallet(WalletIdable target) {
+		panToNodeId(target.getWalletId());
+		
 	}
 
 }
