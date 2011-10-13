@@ -2,6 +2,7 @@ package net.dirtyfilthy.Bitten;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 
 import javax.swing.tree.TreeNode;
 
@@ -11,14 +12,21 @@ import com.google.bitcoin.core.SqlTransaction;
 
 public class RootTransactionTreeNode implements TreeTableNode {
 
-	private ArrayList<SqlTransaction> list;
+	public  ArrayList<SqlTransaction> list;
 	private ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
-	
+	private HashMap<SqlTransaction,TransactionTreeNode> transactionMap;
 	RootTransactionTreeNode(ControlPanel p, ArrayList<SqlTransaction> list){
 		this.list=list;
+		transactionMap=new HashMap<SqlTransaction,TransactionTreeNode>();
 		for(SqlTransaction t : list){
-			children.add(new TransactionTreeNode(this,p,t));
+			TransactionTreeNode n=new TransactionTreeNode(this,p,t);
+			transactionMap.put(t, n);
+			children.add(n);
 		}
+	}
+	
+	public TransactionTreeNode findNodeBySqlTransaction(SqlTransaction t){
+		return transactionMap.get(t);
 	}
 	
 	@Override

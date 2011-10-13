@@ -95,6 +95,10 @@ public class ButtonTabComponent extends JPanel {
         public void actionPerformed(ActionEvent e) {
             int i = pane.indexOfTabComponent(ButtonTabComponent.this);
             if (i != -1) {
+            	Component c=pane.getComponentAt(i);
+            	if(c instanceof Closeable){
+            		((Closeable) c).close();
+            	}
                 pane.remove(i);
             }
         }

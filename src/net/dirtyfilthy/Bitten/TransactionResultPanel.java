@@ -22,9 +22,9 @@ import com.google.bitcoin.core.SqlTransaction;
 import com.google.bitcoin.core.SqlTransactionOutput;
 import com.google.bitcoin.core.TransactionOutput;
 
-public class TransactionResultPanel extends ResultSetPanel {
+public class TransactionResultPanel extends ResultSetPanel implements Closeable {
 	protected ArrayList<SqlTransaction> transactions;
-	protected JXTreeTable table;
+	protected TransactionTreeTable table;
 	protected ControlPanel panel;
 	protected TransactionInfoPanel info;
 	protected TransactionOptionsPanel options;
@@ -63,11 +63,21 @@ public class TransactionResultPanel extends ResultSetPanel {
 			//controller.install(table);
 			this.add(new JScrollPane(table));
 			table.getModel().addTableModelListener(panel);
+			panel.registerTransactionTreeTable(table);
 		
 		
 		
 		
 
+	}
+
+
+
+	public void close() {
+		if(table!=null){
+			panel.unregisterTransactionTreeTable(table);
+		}
+		
 	}
 	
 	

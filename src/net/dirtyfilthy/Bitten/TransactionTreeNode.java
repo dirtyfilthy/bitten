@@ -146,4 +146,13 @@ public class TransactionTreeNode implements TreeTableNode {
 
 	}
 
+	public void setValueAtNoTrigger(Object arg0, int arg1) {
+		if(arg1==6){
+			if(visible!=((Boolean) arg0)){
+				visible=(Boolean) arg0;
+			}
+		}
+		
+	}
+
 }

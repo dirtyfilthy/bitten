@@ -13,12 +13,14 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	private SearchPanel searchPanel;
 	private SqlBlockStore store;
 	private WalletView view;
+	private VisibilityManager visibilityManager;
 	
 	
 	public ControlPanel(SqlBlockStore store, WalletView view) {
 		super();
 		this.store=store;
 		this.view=view;
+		this.visibilityManager=new VisibilityManager(view);
 		searchPanel=new SearchPanel(this);
 		searchPanel.setVisible(true);
 		this.addTab("Search", searchPanel);
@@ -26,7 +28,6 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	}
 	
 	public void registerTransactionPanel(TransactionResultPanel p){
-		
 	}
 	
 	
@@ -46,15 +47,17 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	}
 
 	public void notifyVisibilityChange(TransactionTreeNode transactionTreeNode) {
-		if(transactionTreeNode.visible){
-			view.addTransaction(transactionTreeNode.transaction);
-			
-		}
-		else{
-			view.removeTransaction(transactionTreeNode.transaction);
-		}
+		visibilityManager.setTransactionVisibility(transactionTreeNode.transaction, transactionTreeNode.visible);
 		
 	} 
+	
+	public void registerTransactionTreeTable(TransactionTreeTable t){
+		visibilityManager.registerTable(t);
+	}
+	
+	public void unregisterTransactionTreeTable(TransactionTreeTable t){
+		visibilityManager.unregisterTable(t);
+	}
 
 	public WalletView getView() {
 		return view;
