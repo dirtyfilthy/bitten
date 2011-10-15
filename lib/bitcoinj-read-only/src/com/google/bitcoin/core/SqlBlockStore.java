@@ -37,7 +37,7 @@ import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 /**
- * SQL blockstore
+ * SQL blockstorea
  */
 public class SqlBlockStore implements BlockStore {
 	// We use a ByteBuffer to hold hashes here because the Java array
@@ -58,6 +58,7 @@ public class SqlBlockStore implements BlockStore {
 	private PreparedStatement findTransactionInputsByTransactionIdStatement;
 	private PreparedStatement findTransactionOutputsByTransactionIdStatement;
 	private PreparedStatement findBlockByHashStatement;
+	private PreparedStatement findBlockByHeightStatement;
 	private PreparedStatement findBlockByChainHeadStatement;
 	private PreparedStatement updateChainHeadStatement;
 	private PreparedStatement insertAddressStatement;
@@ -71,7 +72,7 @@ public class SqlBlockStore implements BlockStore {
 
 	private BigInteger chainWork;
 	private int height;
-	private MapCache<String, Long> addressMap= new MapCache<String, Long>(1000);
+	private MapCache<String, Long> addressMap= new MapCache<String, Long>(2000);
 	private static final String INSERT_BLOCK_SQL = "INSERT INTO blocks (hash, height, work, version, prev_block_hash, merkle_root, time, bits, nonce) VALUES (?,?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_SQL = "INSERT INTO transactions (hash, block_id, 'index', version, tx_out_count, tx_in_count, locktime, is_coinbase) VALUES (?,?,?,?,?,?,?,?);";
 	private static final String INSERT_TRANSACTION_INPUT_SQL = "INSERT INTO transaction_inputs(transaction_id, 'index', previous_output_id, previous_output_hash, previous_output_index, script_length, script, sequence, is_coinbase, from_address_id,'value') VALUES (?,?,?,?,?,?,?,?,?,?,?);";
@@ -82,6 +83,7 @@ public class SqlBlockStore implements BlockStore {
 	private static final String FIND_TRANSACTION_OUTPUTS_BY_TRANSACTION_ID_SQL = "SELECT transaction_outputs.* FROM transaction_outputs WHERE transaction_outputs.transaction_id=? ORDER BY 'index';";
 	private static final String FIND_BLOCK_BY_HASH_SQL = "SELECT blocks.* FROM blocks WHERE blocks.hash=? LIMIT 1";
 	private static final String FIND_BLOCK_BY_CHAIN_HEAD_SQL = "SELECT blocks.* FROM chain_head LEFT JOIN blocks ON chain_head.block_id=blocks.id WHERE blocks.id IS NOT NULL LIMIT 1";
+	private static final String FIND_BLOCK_BY_HEIGHT_SQL = "SELECT blocks.* FROM blocks WHERE blocks.height=? LIMIT 1";
 	private static final String UPDATE_CHAIN_HEAD_SQL = "UPDATE chain_head SET block_id=?";
 	private static final String INSERT_ADDRESS_SQL = "INSERT INTO addresses (base58hash) VALUES (?)";
 	private static final String FIND_WALLET_SQL = "SELECT * FROM addresses WHERE wallet_id=? OR address_id = ?";
@@ -95,6 +97,8 @@ public class SqlBlockStore implements BlockStore {
 			boolean newDb = !file.exists();
 
 			sqliteDatabase = connect(file);
+			sqliteDatabase.createStatement().execute("pragma synchronous=0;");
+			sqliteDatabase.createStatement().execute("pragma cache_size=16000;");
 			if (newDb) {
 				create_database();
 			}
@@ -116,6 +120,8 @@ public class SqlBlockStore implements BlockStore {
 					.prepareStatement(FIND_TRANSACTION_OUTPUTS_BY_TRANSACTION_ID_SQL);
 			findBlockByHashStatement = sqliteDatabase
 					.prepareStatement(FIND_BLOCK_BY_HASH_SQL);
+			findBlockByHeightStatement = sqliteDatabase
+					.prepareStatement(FIND_BLOCK_BY_HEIGHT_SQL);
 			findBlockByChainHeadStatement = sqliteDatabase
 					.prepareStatement(FIND_BLOCK_BY_CHAIN_HEAD_SQL);
 			updateChainHeadStatement = sqliteDatabase
@@ -155,9 +161,9 @@ public class SqlBlockStore implements BlockStore {
 		TransactionOutPoint op = new TransactionOutPoint(networkParameters,
 				rs.getLong(6), null);
 
-		System.out.println("outpoint raw hash " + rs.getString(5));
+		
 		op.hash = HexBin.decode(rs.getString(5));
-		System.out.println("outpoint hash " + HexBin.encode(op.hash));
+		
 		t.outpoint = op;
 		t.sequence = rs.getLong(9);
 		t.fromAddressId= rs.getLong(11);
@@ -324,7 +330,7 @@ public class SqlBlockStore implements BlockStore {
 		        }
 		    }
 		 String sql="SELECT * FROM addresses WHERE id IN ("+builder.toString()+")";
-		 System.out.println(sql);
+	
 		 Map<Long,SqlAddress> addressMap=new HashMap<Long,SqlAddress>();
 		 rs2=rawSqlQuery(sql);
 		 while(rs2.next()){
@@ -522,6 +528,7 @@ public class SqlBlockStore implements BlockStore {
 		
 		
 		rs=sqliteDatabase.createStatement().executeQuery("SELECT MIN(COALESCE(wallet_id,id)) FROM addresses WHERE addresses.id IN ("+addressList+")");
+		// rs=sqliteDatabase.createStatement().executeQuery("UPDATE addresses SET wallet_id=(SELECT MIN(COALESCE(wallet_id,id)) FROM addresses WHERE addresses.id IN ("+addressList+")) WHERE addresses.id IN ("+addressList+") ot addresses.wallet_id IN (SELECT DISTINCT wallet_id FROM addresses WHERE addresses.id IN ("+addressList+") AND wallet_id IS NOT NULL)");
 		rs.next();
 		walletId=rs.getLong(1);
 		rs.close();
@@ -541,7 +548,7 @@ public class SqlBlockStore implements BlockStore {
 		String sql="UPDATE addresses SET wallet_id = "+walletId+" WHERE addresses.id IN (" +addressList+")";
 		System.out.println(sql);
 		sqliteDatabase.createStatement().execute(sql);
-		if(walletIds.size()>0){
+		if(walletIds.size()>0 && !(walletIds.size()==1 && walletIds.get(0).equals(walletId))){
 			sql="UPDATE addresses SET wallet_id = "+walletId+" WHERE addresses.wallet_id IN (" +walletList+")";
 			System.out.println(sql);
 			sqliteDatabase.createStatement().execute(sql);
@@ -565,7 +572,7 @@ public class SqlBlockStore implements BlockStore {
 			insertTransactionOutputStatement.setString(5,
 					HexBin.encode(o.getScriptBytes()));
 			try {
-				System.out.println("to address: " + o.getToAddress());
+				
 				insertTransactionOutputStatement.setLong(6,
 						findOrCreateAddressId(o.getToAddress()));
 			} catch (ScriptException e) {
@@ -672,6 +679,22 @@ public class SqlBlockStore implements BlockStore {
 			throw new BlockStoreException(e);
 		}
 	}
+	
+	SqlFullStoredBlock getByHeight(int i){
+		try {
+			findBlockByHeightStatement.setInt(1, i);
+			ResultSet rs = findBlockByHeightStatement.executeQuery();
+			if (rs.next()) {
+				SqlFullStoredBlock b = loadBlockFromResultSet(rs);
+				rs.close();
+				return b;
+			}
+			rs.close();
+			return null;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public synchronized SqlFullStoredBlock getChainHead() {
 		if (chainHead != null) {
@@ -735,7 +758,7 @@ public class SqlBlockStore implements BlockStore {
 		s.execute("CREATE TABLE transaction_outputs(id INTEGER NOT NULL PRIMARY KEY, transaction_id INTEGER, 'index' INTEGER, value INTEGER, script_length INTEGER, script VARCHAR, to_address_id INTEGER, is_coinbase INTEGER);");
 		s.execute("CREATE INDEX transaction_outputs_transaction_id_idx ON transaction_outputs (transaction_id);");
 		s.execute("CREATE TABLE chain_head(block_id INTEGER);");
-		s.execute("CREATE TABLE addresses (id INTEGER NOT NULL PRIMARY KEY, base58hash VARCHAR UNIQUE, wallet_id INTEGER, label NOT NULL DEFAULT \"\");");
+		s.execute("CREATE TABLE addresses (id INTEGER NOT NULL PRIMARY KEY, base58hash VARCHAR UNIQUE, wallet_id INTEGER, label VARCHAR NOT NULL DEFAULT \"\", notes VARCHAR NOT NULL DEFAULT \"\");");
 		s.execute("CREATE INDEX wallet_id_idx ON addresses (wallet_id);");
 		s.execute("CREATE INDEX tran_out_to_idx ON transaction_outputs (to_address_id);");
 		s.execute("CREATE INDEX tran_in_from_idx ON transaction_inputs (from_address_id);");

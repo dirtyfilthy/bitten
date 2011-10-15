@@ -10,10 +10,13 @@ import javax.swing.event.EventListenerList;
 import com.google.bitcoin.core.BlockChain;
 import com.google.bitcoin.core.BlockChainListener;
 import com.google.bitcoin.core.DnsDiscovery;
+import com.google.bitcoin.core.IrcDiscovery;
 import com.google.bitcoin.core.NetworkConnection;
 import com.google.bitcoin.core.Peer;
+import com.google.bitcoin.core.PeerDiscovery;
 import com.google.bitcoin.core.PeerDiscoveryException;
 import com.google.bitcoin.core.ProtocolException;
+import com.google.bitcoin.core.SeedPeers;
 import com.google.bitcoin.core.StoredBlock;
 
 
@@ -26,10 +29,10 @@ public class BlockChainDownloader extends Thread {
 
 	public void run(){
 	
-		DnsDiscovery dnsDiscovery=new DnsDiscovery(Bitten.networkParameters);
+		PeerDiscovery peerDiscovery=new SeedPeers(Bitten.networkParameters);
 		try {
 			while(true){
-			InetSocketAddress addresses[]=dnsDiscovery.getPeers();
+			InetSocketAddress addresses[]=peerDiscovery.getPeers();
 			//InetSocketAddress addresses[]={new InetSocketAddress("localhost",8333)};
 			System.out.println("peers "+addresses.length);
 			NetworkConnection conn;

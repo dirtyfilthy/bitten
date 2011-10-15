@@ -186,11 +186,11 @@ public class BlockChain {
             if (haveNewBestChain) {
                 log.info("Block is causing a re-organize");
             } else {
-                StoredBlock splitPoint = findSplit(newStoredBlock, chainHead);
-                String splitPointHash =
-                        splitPoint != null ? splitPoint.getHeader().getHashAsString() : "?";
-                log.info("Block forks the chain at {}, but it did not cause a reorganize:\n{}",
-                          splitPointHash, newStoredBlock);
+                //StoredBlock splitPoint = findSplit(newStoredBlock, chainHead);
+                //String splitPointHash =
+                 //       splitPoint != null ? splitPoint.getHeader().getHashAsString() : "?";
+                // log.info("Block forks the chain at {}, but it did not cause a reorganize:\n{}",
+                //          splitPointHash, newStoredBlock);
             }
 
             // We may not have any transactions if we received only a header. That never happens today but will in
@@ -212,18 +212,14 @@ public class BlockChain {
         //
         // Firstly, calculate the block at which the chain diverged. We only need to examine the
         // chain from beyond this block to find differences.
-        StoredBlock splitPoint = findSplit(newChainHead, chainHead);
-        log.info("Re-organize after split at height {}", splitPoint.getHeight());
-        log.info("Old chain head: {}", chainHead.getHeader().getHashAsString());
-        log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
-        log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
+        // log.info("Re-organize after split at height {}", splitPoint.getHeight());
+        // log.info("Old chain head: {}", chainHead.getHeader().getHashAsString());
+        // log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
+        // log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
         // Then build a list of all blocks in the old part of the chain and the new part.
-        List<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
-        List<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
         // Now inform the wallet. This is necessary so the set of currently active transactions (that we can spend)
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
         // before and our previous spends might have been undone.
-        wallet.reorganize(oldBlocks, newBlocks);
         // Update the pointer to the best known block.
         setChainHead(newChainHead);
     }
@@ -352,15 +348,8 @@ public class BlockChain {
         // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
         // two weeks after the initial block chain download.
         long now = System.currentTimeMillis();
-        StoredBlock cursor = blockStore.get(prev.getHash());
-        for (int i = 0; i < params.interval - 1; i++) {
-            if (cursor == null) {
-                // This should never happen. If it does, it means we are following an incorrect or busted chain.
-                throw new VerificationException(
-                        "Difficulty transition point but we did not find a way back to the genesis block.");
-            }
-            cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
-        }
+        StoredBlock cursor = ((SqlBlockStore) blockStore).getByHeight(storedPrev.getHeight()-(params.interval-1));
+  
         log.info("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
 
         Block blockIntervalAgo = cursor.getHeader();

@@ -49,6 +49,8 @@ public interface BlockStore {
      * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work.
      */
     void setChainHead(StoredBlock chainHead) throws BlockStoreException;
+
+	
     
 }
 
