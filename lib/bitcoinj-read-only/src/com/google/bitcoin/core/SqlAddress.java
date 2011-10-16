@@ -31,6 +31,11 @@ public class SqlAddress extends Address implements Accountable, WalletIdable, Co
 		// TODO Auto-generated method stub
 		return t.outgoingAmountForAddress(this);
 	}
+	
+	public boolean isLabelled(){
+		return label!=null && !label.equals("");
+	}
+		
 
 	@Override
 	public int compareTo(Object arg0) {

@@ -175,8 +175,8 @@ public class BlockChain {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
             log.info("Chain is now {} blocks high", chainHead.getHeight());
-            if (newTransactions != null)
-                sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
+            //if (newTransactions != null)
+            //    sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
         } else {
             // This block connects to somewhere other than the top of the best known chain. We treat these differently.
             //

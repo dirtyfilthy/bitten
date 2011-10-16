@@ -60,15 +60,15 @@ public class Script {
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
     private List<byte[]> chunks;
     private boolean tracing;
-    byte[] programCopy;      // TODO: remove this
+   
     private final NetworkParameters params;
 
     /** Concatenates two scripts to form a new one. This is used when verifying transactions. */
     public static Script join(Script a,  Script b) throws ScriptException {
         assert a.params == b.params;
-        byte[] fullProg = new byte[a.programCopy.length + b.programCopy.length];
-        System.arraycopy(a.programCopy, 0, fullProg, 0, a.programCopy.length);
-        System.arraycopy(b.programCopy, 0, fullProg, a.programCopy.length, b.programCopy.length);
+        byte[] fullProg = new byte[a.program.length + b.program.length];
+        System.arraycopy(a.program, 0, fullProg, 0, a.program.length);
+        System.arraycopy(b.program, 0, fullProg, a.program.length, b.program.length);
         return new Script(a.params, fullProg, 0, fullProg.length);
     }
 
@@ -150,10 +150,8 @@ public class Script {
      */
     private void parse(byte[] programBytes, int offset, int length) throws ScriptException {
         // TODO: this is inefficient
-        programCopy = new byte[length];
-        System.arraycopy(programBytes, offset, programCopy, 0, length);
+        program = programBytes;
 
-        program = programCopy;
         offset = 0;
         chunks = new ArrayList<byte[]>(10);  // Arbitrary choice of initial size.
         cursor = offset;

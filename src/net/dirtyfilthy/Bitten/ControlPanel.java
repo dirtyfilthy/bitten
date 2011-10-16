@@ -8,6 +8,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import com.google.bitcoin.core.SqlBlockStore;
+import com.google.bitcoin.core.SqlWallet;
 
 public class ControlPanel extends JTabbedPane implements TableModelListener {
 	private SearchPanel searchPanel;
@@ -61,6 +62,11 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 
 	public WalletView getView() {
 		return view;
+	}
+
+	public WalletStore getWalletStore() {
+		// TODO Auto-generated method stub
+		return store.walletStore();
 	}
 
 	

@@ -34,7 +34,7 @@ public class TransactionOutput extends Message implements Serializable {
 
     // A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
     // this output.
-    private BigInteger value;
+    public BigInteger value;
     private byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
