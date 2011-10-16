@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
@@ -32,15 +33,20 @@ public abstract class ResultSetPanel extends JPanel implements PropertyChangeLis
 	public void propertyChange(PropertyChangeEvent arg0) {
 		if(arg0.getPropertyName().equals("resultset")){
 			processResultSet((ArrayList<SqlTransaction>) arg0.getNewValue());
+			progress.setVisible(false);
 		}
-		progress.setVisible(false);
+		
 		
 	}
 	
 	protected void createStatusBar(){
-		progress=new JProgressBar();
+		progress=new JProgressBar(0,100);
+		progress.setVisible(true);
 		progress.setIndeterminate(true);
+		progress.setString("Working...");
+		progress.setStringPainted(true);
 		this.add(progress);
+		this.repaint();
 	}
 	
 	public void execute(){

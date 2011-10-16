@@ -64,7 +64,7 @@ public class TransactionResultPanel extends ResultSetPanel implements Closeable 
 			this.add(new JScrollPane(table));
 			table.getModel().addTableModelListener(panel);
 			panel.registerTransactionTreeTable(table);
-		
+			this.repaint();
 		
 		
 		
