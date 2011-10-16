@@ -55,12 +55,23 @@ public class TransactionTreeTable extends JXTreeTable {
 		            Object c=path.getLastPathComponent();
 		            if(c instanceof TransactionRowTreeNode){
 		            	TransactionRowTreeNode node=(TransactionRowTreeNode) c;
-		            	String address=(String) node.getValueAt(4);
+		            	String address=node.output.getAddress().toString();
 		            	System.out.println("address "+address);
 		            	panel.searchAddress(address);
 		            	
-		            }      
+		            }
+		            else if(c instanceof TransactionTreeNode){
+		            	TransactionTreeNode node=(TransactionTreeNode) c;
+		            	if(column==4){
+		            		SqlTransactionOutput o=(SqlTransactionOutput) node.transaction.outputs.get(0);
+		            		if(o.getAddress().walletId!=0){
+		            			panel.showWallet(o.getAddress().walletId);
+		            		}
+		            	}
+		            	
+		            }
 		        }
+		        
 		       
 		    }
 		    

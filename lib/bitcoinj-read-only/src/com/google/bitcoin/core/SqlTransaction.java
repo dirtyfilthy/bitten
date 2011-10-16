@@ -56,6 +56,9 @@ public class SqlTransaction extends Transaction {
 		long amount=0;
 		for(TransactionInput i : inputs){
 			SqlTransactionInput i2=(SqlTransactionInput) i;
+			if(i2.isCoinBase()){
+				continue;
+			}
 			if(i2.getAddress().getWalletId()==walletId){
 				amount=amount+i2.getBtcValue();
 			}
