@@ -62,6 +62,7 @@ public class SqlBlockStore implements BlockStore {
 	private PreparedStatement findBlockByChainHeadStatement;
 	private PreparedStatement updateChainHeadStatement;
 	private PreparedStatement insertAddressStatement;
+	private PreparedStatement findWalletByIdStatement;
 	private PreparedStatement findAddressByHashStatement;
 	private PreparedStatement findAddressIdByHashStatement;
 	private SqlFullStoredBlock chainHead = null;
@@ -86,7 +87,7 @@ public class SqlBlockStore implements BlockStore {
 	private static final String FIND_BLOCK_BY_HEIGHT_SQL = "SELECT blocks.* FROM blocks WHERE blocks.height=? LIMIT 1";
 	private static final String UPDATE_CHAIN_HEAD_SQL = "UPDATE chain_head SET block_id=?";
 	private static final String INSERT_ADDRESS_SQL = "INSERT INTO addresses (base58hash,hash_code) VALUES (?,?)";
-	private static final String FIND_WALLET_SQL = "SELECT * FROM addresses WHERE wallet_id=? OR address_id = ?";
+	private static final String FIND_WALLET_SQL = "SELECT * FROM addresses WHERE wallet_id=? OR id = ?";
 	private static final String FIND_ADDRESS_BY_HASH_SQL = "SELECT * FROM addresses WHERE hash_code=? LIMIT 1";
 	private static final String FIND_ADDRESS_ID_BY_HASH_SQL = "SELECT id FROM addresses WHERE hash_code=? LIMIT 1";
 
@@ -131,6 +132,8 @@ public class SqlBlockStore implements BlockStore {
 					.prepareStatement(FIND_ADDRESS_BY_HASH_SQL);
 			findAddressIdByHashStatement = sqliteDatabase
 					.prepareStatement(FIND_ADDRESS_ID_BY_HASH_SQL);
+			findWalletByIdStatement = sqliteDatabase
+					.prepareStatement(FIND_WALLET_SQL);
 			insertAddressStatement = sqliteDatabase
 					.prepareStatement(INSERT_ADDRESS_SQL);
 			if (newDb) {
@@ -237,6 +240,19 @@ public class SqlBlockStore implements BlockStore {
 		a.label = rs.getString(4);
 		return a;
 	}
+
+	public SqlWallet findWalletById(long id) throws SQLException{
+		ResultSet rs;
+		findWalletByIdStatement.setLong(1, id);
+		rs=findWalletByIdStatement.executeQuery();
+		SqlWallet w;
+		if(rs.next()){
+			w=this.loadWalletFromResultSet(rs);
+			w.id=id;
+			return w;
+		}
+		return null;
+	}
 	
 	public SqlWallet loadWalletFromResultSet(ResultSet rs){
 		SqlWallet wallet=new SqlWallet();
@@ -277,6 +293,7 @@ public class SqlBlockStore implements BlockStore {
 				 map.get(a.getWalletId()).addresses.add(a);
 			 }else{
 				 SqlWallet w=new SqlWallet();
+				 w.id=a.getWalletId();
 				 w.addresses.add(a);
 				 map.put(a.getWalletId(),w);
 			 }

@@ -16,6 +16,7 @@ import org.jdesktop.swingx.rollover.RolloverController;
 import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
+import com.google.bitcoin.core.Accountable;
 import com.google.bitcoin.core.SqlAddress;
 import com.google.bitcoin.core.SqlBlockStore;
 import com.google.bitcoin.core.SqlTransaction;
@@ -28,7 +29,7 @@ public class TransactionResultPanel extends ResultSetPanel implements Closeable 
 	protected ControlPanel panel;
 	protected TransactionInfoPanel info;
 	protected TransactionOptionsPanel options;
-	public SqlAddress targetAddress;
+	public Accountable target;
 	
 	TransactionResultPanel(ControlPanel p,SqlBlockStore s,PreparedStatement query){
 		super();
@@ -50,12 +51,12 @@ public class TransactionResultPanel extends ResultSetPanel implements Closeable 
 			
 			TransactionTreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
-			info=new TransactionInfoPanel(targetAddress, transactions);
+			info=new TransactionInfoPanel(target, transactions);
 			this.add(info);
-			options=new TransactionOptionsPanel(panel,targetAddress, treeTableModel);
+			options=new TransactionOptionsPanel(panel,target, treeTableModel);
 			this.add(options);
 			table=new TransactionTreeTable(panel, treeTableModel);
-			table.setTreeCellRenderer(new AddressTreeCellRenderer(targetAddress));
+			table.setTreeCellRenderer(new AddressTreeCellRenderer(target));
 			
 			RolloverController controller = new HighlightRolloverController(panel.getView());
 			//table=new JTable(m);

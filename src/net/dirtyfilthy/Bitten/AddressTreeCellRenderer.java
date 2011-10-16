@@ -10,23 +10,26 @@ import javax.swing.tree.TreeNode;
 import org.jdesktop.swingx.tree.DefaultXTreeCellRenderer;
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
+import com.google.bitcoin.core.Accountable;
 import com.google.bitcoin.core.SqlAddress;
 
 public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 
-	protected SqlAddress targetAddress;
+	protected Accountable target;
 	
-	public AddressTreeCellRenderer(SqlAddress a) {
+	public AddressTreeCellRenderer(Accountable target) {
 		super();
-		targetAddress=a;
+		this.target=target;
 		 
-	}
+	} 
+	
+	
 	
 	 public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-		 		if((value instanceof TransactionTreeNode) && (value != null) && (targetAddress!=null)) {
+		 		if((value instanceof TransactionTreeNode) && (value != null) && (target!=null)) {
 		 			TransactionTreeNode t=(TransactionTreeNode) value;
 		 			URL img;
-		 			if(t.transaction.incomingAmountForAddress(targetAddress)>t.transaction.outgoingAmountForAddress(targetAddress)){
+		 			if(target.incomingAmount(t.transaction)>target.outgoingAmount(t.transaction)){
 		 				img=this.getClass().getResource("/icons/incoming.png");
 		 			}
 		 			else{

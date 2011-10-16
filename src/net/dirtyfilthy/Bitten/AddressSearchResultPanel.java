@@ -21,7 +21,7 @@ public class AddressSearchResultPanel extends JPanel implements Closeable {
 			query.setLong(2, a.id);
 			
 			results=new TransactionResultPanel(p, store, query);
-			results.targetAddress=a;
+			results.target=a;
 			results.setVisible(true);
 			this.add(results);
 			results.execute();

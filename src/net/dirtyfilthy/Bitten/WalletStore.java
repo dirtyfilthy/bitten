@@ -1,5 +1,6 @@
 package net.dirtyfilthy.Bitten;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -73,7 +74,20 @@ public class WalletStore {
 	}
 	
 	public SqlWallet findById(long id){
-		return walletMap.get(new Long(id));
-		
+		SqlWallet w=walletMap.get(new Long(id));
+		if(w!=null){
+			return w;
+		}
+		try {
+			w=store.findWalletById(id);
+			if(w!=null){
+				walletMap.put(id, w);
+				return w;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

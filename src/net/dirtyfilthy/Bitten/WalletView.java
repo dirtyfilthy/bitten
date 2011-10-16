@@ -2,10 +2,13 @@ package net.dirtyfilthy.Bitten;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
+import javax.swing.KeyStroke;
 import javax.swing.text.html.HTMLDocument.Iterator;
 
 import com.google.bitcoin.core.SqlAddress;
@@ -40,6 +43,7 @@ import prefuse.render.EdgeRenderer;
 import prefuse.render.LabelRenderer;
 import prefuse.util.ColorLib;
 import prefuse.util.force.DragForce;
+import prefuse.util.ui.JForcePanel;
 import prefuse.visual.VisualItem;
 
 public class WalletView extends Display {
@@ -50,6 +54,7 @@ public class WalletView extends Display {
 	private Visualization viz;
 	private ArrayList<Tuple> highlightedTuples;
 	private WalletStore walletStore;
+	private ForceDirectedLayout forceDirected;
 
 	WalletView(WalletStore s) {
 		walletStore=s;
@@ -72,10 +77,14 @@ public class WalletView extends Display {
 		Node n2 = graph.addNode();
 		n1.setLong(0, 1);
 		n2.setLong(0, 2);
-		graph.addEdge(n1, n2);
+		Edge e2=graph.addEdge(n1, n2);
+		
 		viz = new Visualization();
 		viz.add("graph", graph);
+		viz.getVisualItem("graph", n1).setVisible(false);
+		viz.getVisualItem("graph", n2).setVisible(false);
 		// draw the "name" label for NodeItems
+		viz.getVisualItem("graph", e2).setVisible(false);
 		LabelRenderer r = new LabelRenderer("label");
 		r.setRoundedCorner(8, 8); // round the corners
 		EdgeRenderer e = new EdgeRenderer(Constants.EDGE_TYPE_CURVE);
@@ -84,10 +93,11 @@ public class WalletView extends Display {
 
 		viz.setRendererFactory(new DefaultRendererFactory(r, e));
 		ActionList layout = new ActionList(Activity.INFINITY);
-		ForceDirectedLayout f = new ForceDirectedLayout("graph");
+		forceDirected = new ForceDirectedLayout("graph");
 		// f.getForceSimulator().setIntegrator(new EulerIntegrator());
-		f.getForceSimulator().addForce(new DragForce((float) 0.01));
-		layout.add(f);
+		forceDirected.getForceSimulator().addForce(new DragForce((float) 0.01));
+		layout.add(forceDirected);
+		
 		// layout.add(new NodeLinkTreeLayout("graph"));
 		layout.add(new RepaintAction());
 
@@ -108,7 +118,7 @@ public class WalletView extends Display {
 		DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc_d");
 
 		edgeWidth.setScale(Constants.LOG_SCALE);
-		edgeWidth.setMaximumSize(20);
+		edgeWidth.setMaximumSize(50);
 		ActionList color = new ActionList();
 		color.add(text);
 		color.add(fill);
@@ -124,6 +134,16 @@ public class WalletView extends Display {
 		addControlListener(new PanControl()); // pan with background left-drag
 		addControlListener(new ZoomControl()); // zoom with vertical right-drag
 		addControlListener(new ZoomToFitControl()); // zoom with vertical right-drag
+		
+		registerKeyboardAction(new ActionListener  () {
+			        public void actionPerformed(ActionEvent   e) {
+			        	JForcePanel.showForcePanel(forceDirected.getForceSimulator());
+			                repaint();
+			           }
+			        }, "show force panel", KeyStroke.getKeyStroke("ctrl F"),
+			               WHEN_FOCUSED);
+
+			
 		this.setHighQuality(true);
 		viz.run("color");
 		// start up the animated layout

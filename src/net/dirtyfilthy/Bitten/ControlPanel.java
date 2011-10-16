@@ -38,6 +38,14 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		setTabComponentAt(this.getTabCount()-1,new ButtonTabComponent(this));
 		this.setSelectedIndex(this.getTabCount()-1);
 	}
+	
+	public void showWallet(long wallet_id){
+		SqlWallet w=store.walletStore().findById(wallet_id);
+		WalletSearchResultPanel results=new WalletSearchResultPanel(this,store,wallet_id);
+		this.addTab(StringUtils.truncateText(w.label(),8),results);
+		setTabComponentAt(this.getTabCount()-1,new ButtonTabComponent(this));
+		this.setSelectedIndex(this.getTabCount()-1);
+	}
 
 	@Override
 	public void tableChanged(TableModelEvent arg0) {
@@ -68,6 +76,12 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	public WalletStore getWalletStore() {
 		// TODO Auto-generated method stub
 		return store.walletStore();
+	}
+	
+
+	public SqlBlockStore getBlockStore() {
+		// TODO Auto-generated method stub
+		return store;
 	}
 
 	
