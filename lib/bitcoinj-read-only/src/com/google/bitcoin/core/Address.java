@@ -34,8 +34,11 @@ import java.util.Arrays;
  *
  * Note that an address is specific to a network because the first byte is a discriminator value.
  */
+
 public class Address extends VersionedChecksummedBytes {
-    /**
+    protected String asString ;
+	
+	/**
      * Construct an address from parameters and the hash160 form. Example:<p>
      *
      * <pre>new Address(NetworkParameters.prodNet(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
@@ -56,6 +59,16 @@ public class Address extends VersionedChecksummedBytes {
         if (version != params.addressHeader)
             throw new AddressFormatException("Mismatched version number, trying to cross networks? " + version +
                                              " vs " + params.addressHeader);
+    }
+    
+    public String toString(){
+    	if(asString!=null){
+    		return asString;
+    	}
+    	else{
+    		asString=super.toString();
+    	}
+    	return asString;
     }
 
     /** The (big endian) 20 byte hash that is the core of a BitCoin address. */
