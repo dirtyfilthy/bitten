@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.swing.SwingUtilities;
+
 import com.google.bitcoin.core.SqlTransaction;
 
 public class VisibilityManager {
@@ -21,7 +23,7 @@ public class VisibilityManager {
 		this.visibilityMap=new HashMap<SqlTransaction,Boolean>();
 	}
 	
-	public synchronized void registerTable(TransactionTreeTable table){
+	public synchronized void registerTable(final TransactionTreeTable table){
 		for(SqlTransaction t : ((RootTransactionTreeNode) table.getTreeTableModel().getRoot()).list){
 			if(transactionMap.containsKey(t)){
 				transactionMap.get(t).add(table);
@@ -34,8 +36,11 @@ public class VisibilityManager {
 				visibilityMap.put(t, false);
 			}
 		}
-		table.repaint();
-		
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run(){
+				table.repaint();
+			}
+		});
 	}
 	
 	
@@ -65,10 +70,13 @@ public class VisibilityManager {
 		if(!transactionMap.containsKey(t) || visibilityMap.get(t).booleanValue()==visible){
 			return;
 		}
+		final ArrayList<TransactionTreeTable> toRepaint=new ArrayList<TransactionTreeTable>();
 		ArrayList<TransactionTreeTable> tables=transactionMap.get(t);
 		for(TransactionTreeTable table : tables){
 			setTransactionVisibilityForTable(table,t,visible);
-			table.repaint();
+			if(!toRepaint.contains(table)){
+				toRepaint.add(table);
+			}
 		}
 		if(visible){
 			view.addTransaction(t);
@@ -76,7 +84,15 @@ public class VisibilityManager {
 		else{
 			view.removeTransaction(t);
 		}
+		
 		visibilityMap.put(t, visible);
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run(){
+				for(TransactionTreeTable t : toRepaint){
+					t.repaint();
+				}
+			}
+		});
 	}
 	
 

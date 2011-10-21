@@ -29,11 +29,7 @@ public class SearchBlockStoreTask extends SwingWorker<ArrayList<SqlTransaction>,
 		ResultSet rs=query.executeQuery();
 		ArrayList<SqlTransaction> transactions=new ArrayList<SqlTransaction>();
 		ArrayList<SqlAddress> addresses=new ArrayList<SqlAddress>();
-		while(rs.next()){
-			SqlTransaction t=store.loadTransactionFromResultSet(rs);
-			transactions.add(t);
-			
-		}
+		transactions=store.multiLoadTransactionsFromResultSet(rs);
 		rs.close();
 		store.walletStore().addFromTransactions(transactions);
 		return transactions;

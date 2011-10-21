@@ -7,6 +7,7 @@ public class SqlWallet implements WalletIdable, Accountable {
 	
 	public ArrayList<SqlAddress> addresses;
 	public Long id;
+	protected String label;
 	
 	SqlWallet(){
 		addresses=new ArrayList<SqlAddress>();
@@ -32,17 +33,23 @@ public class SqlWallet implements WalletIdable, Accountable {
 	}
 	
 	public String label(){
+		if(label!=null){
+			return label;
+		}
 		Collections.sort(addresses);
 		for(SqlAddress a : addresses) {
 			if(a.label==null){
 				continue;
 			}
 			if(!a.label.trim().equals("")){
-				return a.label.trim();
+				label=a.label.trim();
 			}
 			
 		}
-		return new Long(getWalletId()).toString();
+		if(label==null){
+			label=new Long(getWalletId()).toString();
+		}
+		return label;
 	}
 
 }
