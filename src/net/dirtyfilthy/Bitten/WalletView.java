@@ -9,6 +9,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.text.html.HTMLDocument.Iterator;
 
 import com.google.bitcoin.core.SqlAddress;
@@ -137,10 +138,13 @@ public class WalletView extends Display {
 		
 		registerKeyboardAction(new ActionListener  () {
 			        public void actionPerformed(ActionEvent   e) {
-			        	JForcePanel.showForcePanel(forceDirected.getForceSimulator());
-			                repaint();
-			           }
-			        }, "show force panel", KeyStroke.getKeyStroke("ctrl F"),
+			        	SwingUtilities.invokeLater(new Runnable() {
+			        		public void run(){
+			        			JForcePanel.showForcePanel(forceDirected.getForceSimulator());
+			        			repaint();
+			        		}
+			           });
+			        }}, "show force panel", KeyStroke.getKeyStroke("ctrl F"),
 			               WHEN_FOCUSED);
 
 			
@@ -157,7 +161,6 @@ public class WalletView extends Display {
 		if (n == null) {
 			n = graph.addNode();
 		}
-		System.out.println(walletStore);
 		label=walletStore.findById(id).label();
 		n.setLong(0, id);
 		n.setString(1, label);
@@ -165,10 +168,7 @@ public class WalletView extends Display {
 	}
 	
 	public void removeOutputEdge(long source, long target, long amount) {
-		System.out.println("Removing edge src " + source + " dst " + target
-				+ " btc " + amount);
 		Node sourceNode = graph.getNodeFromKey(source);
-		System.out.println("source node " + sourceNode);
 		Node targetNode = graph.getNodeFromKey(target);
 		Edge edge = graph.getEdge(sourceNode, targetNode);
 		long amt = edge.getLong(0);
@@ -178,7 +178,6 @@ public class WalletView extends Display {
 			edge.setDouble(3, Utils.btcToDouble(amt));
 			
 		} else {
-			System.out.println("removing edge");
 			graph.removeEdge(edge);
 		}
 		if (!sourceNode.edges().hasNext()) {
@@ -187,16 +186,9 @@ public class WalletView extends Display {
 		if (!targetNode.edges().hasNext()) {
 			graph.removeNode(targetNode);
 		}
-		java.util.Iterator<Edge> i = graph.edges();
-		while (i.hasNext()) {
-			System.out.println("edge: " + i.next());
-		}
-
 	}
 
 	public Edge addOutputEdge(long source, long target, long amount) {
-		System.out.println("Adding edge src " + source + " dst " + target
-				+ " btc " + amount);
 		Node sourceNode = graph.getNodeFromKey(source);
 		System.out.println("source node " + sourceNode);
 		Node targetNode = graph.getNodeFromKey(target);
@@ -209,11 +201,6 @@ public class WalletView extends Display {
 			edge.setDouble(3, Utils.btcToDouble(edge.getLong(0) + amount));
 			edge.setLong(0, edge.getLong(0) + amount);
 		}
-		java.util.Iterator<Edge> i = graph.edges();
-		while (i.hasNext()) {
-			System.out.println("edge: " + i.next());
-		}
-		System.out.println("getkey " + graph.getNodeFromKey(source));
 		return edge;
 	}
 
