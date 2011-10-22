@@ -70,6 +70,17 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		node.setProperty("value",value.toByteArray());
 		node.setProperty("scriptBytes",scriptBytes);
 		node.setProperty("index",index);
+		try {
+			GraphAddress a=GraphAddress.findOrCreateAddress(graph, params, getToAddress().toString());
+			node.createRelationshipTo(a.node(), GraphRelationships.TO_ADDRESS);
+		} catch (AddressFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ScriptException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	@Override
