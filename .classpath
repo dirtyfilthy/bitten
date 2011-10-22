@@ -16,5 +16,29 @@
 	<classpathentry kind="lib" path="lib/wstx-asl-3.2.6.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/swingx-core-1.6.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tinylaf.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/geronimo-jta_1.1_spec-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/lucene-core-3.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-community-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-cypher-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-graph-algo-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-graph-matching-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-jmx-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-kernel-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-lucene-index-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-shell-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/neo4j-udc-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/org.apache.servicemix.bundles.jline-0.9.94_1.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/scala-library-2.9.0-1.jar"/>
+	<classpathentry kind="lib" path="lib/neo4j/server-api-1.5.M02.jar"/>
+	<classpathentry kind="lib" path="lib/jung-3d-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-3d-demos-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-algorithms-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-api-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-graph-impl-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-io-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-jai-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-jai-samples-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-samples-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/jung-visualization-2.0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

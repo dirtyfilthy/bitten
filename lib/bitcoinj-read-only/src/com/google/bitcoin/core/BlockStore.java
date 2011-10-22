@@ -15,7 +15,7 @@
  */
 
 package com.google.bitcoin.core;
-
+ 
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
  * different ways. An in-memory implementation (MemoryBlockStore) exists for unit testing but real apps will want to
@@ -32,23 +32,23 @@ public interface BlockStore {
      * StoredBlock directly. Can throw if there is a problem with the underlying storage layer such as running out of
      * disk space.
      */
-    void put(StoredBlock block) throws BlockStoreException;
+    void put(GraphBlock block) throws BlockStoreException;
 
     /**
      * Returns the StoredBlock given a hash. The returned values block.getHash() method will be equal to the
      * parameter. If no such block is found, returns null.
      */
-    StoredBlock get(byte[] hash) throws BlockStoreException;
+    GraphBlock get(byte[] hash) throws BlockStoreException;
 
     /**
      * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work.
      */
-    StoredBlock getChainHead() throws BlockStoreException;
+    GraphBlock getChainHead() throws BlockStoreException;
 
     /**
      * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work.
      */
-    void setChainHead(StoredBlock chainHead) throws BlockStoreException;
+    void setChainHead(GraphBlock chainHead) throws BlockStoreException;
 
 	
     

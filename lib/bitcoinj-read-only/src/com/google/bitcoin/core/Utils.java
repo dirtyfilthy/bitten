@@ -41,6 +41,8 @@ public class Utils {
      * of them in a coin (whereas one would expect 1 billion.
      */
     public static final BigInteger COIN = new BigInteger("100000000", 10);
+    
+    public static final BigInteger FIDDY_COIN = new BigInteger("5000000000", 10);
 
     /**
      * How many "nanocoins" there are in 0.01 BitCoins.

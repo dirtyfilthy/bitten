@@ -56,6 +56,12 @@ public class TransactionOutPoint extends Message implements Serializable {
         super(params, payload, offset);
     }
     
+    public TransactionOutPoint(NetworkParameters params, byte[] hash, long index) throws ProtocolException {
+        super(params);
+        this.hash=hash;
+        this.index=index;
+    }
+    
     @Override
     void parse() throws ProtocolException {
         hash = readHash();

@@ -49,18 +49,18 @@ public class Block extends Message {
 
     // For unit testing. If not zero, use this instead of the current time.
     static long fakeClock = 0;
-    private long version;
-    private byte[] prevBlockHash;
-    private byte[] merkleRoot;
-    private long time;
-    private long difficultyTarget;  // "nBits"
+    protected long version;
+    protected byte[] prevBlockHash;
+    protected byte[] merkleRoot;
+    protected long time;
+    protected long difficultyTarget;  // "nBits"
 
-    private long nonce;
+    protected long nonce;
 
     /** If null, it means this object holds only the headers. */
-    List<Transaction> transactions;
+    protected List<Transaction> transactions;
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
-    private transient byte[] hash;
+    protected transient byte[] hash;
 
     /** Special case constructor, used for the genesis node and unit tests. */
     Block(NetworkParameters params) {
