@@ -75,7 +75,7 @@ public class NetworkConnection {
         in = new BufferedInputStream(socket.getInputStream());
 
         // the version message never uses checksumming. Update checkumming property after version is read.
-        this.serializer = new BitcoinSerializer(params, false);
+        this.serializer = new GraphBitcoinSerializer(params, false);
 
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.

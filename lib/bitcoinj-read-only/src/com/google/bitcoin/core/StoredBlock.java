@@ -42,7 +42,12 @@ public class StoredBlock implements Serializable {
     }
 
 
-    /**
+    public StoredBlock() {
+		// TODO Auto-generated constructor stub
+	}
+
+
+	/**
      * The block header this object wraps. The referenced block object must not have any transactions in it.
      */
     public Block getHeader() {
@@ -64,7 +69,7 @@ public class StoredBlock implements Serializable {
     public int getHeight() {
         return height;
     }
-
+ 
     /** Returns true if this objects chainWork is higher than the others. */
     public boolean moreWorkThan(StoredBlock other) {
         return chainWork.compareTo(other.chainWork) > 0;

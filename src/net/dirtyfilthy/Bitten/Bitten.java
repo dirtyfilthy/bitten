@@ -18,8 +18,8 @@ import javax.swing.JLabel;
 
 import com.google.bitcoin.core.BlockChain;
 import com.google.bitcoin.core.BlockStore;
+import com.google.bitcoin.core.GraphBlockStore;
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.SqlBlockStore;
 import com.google.bitcoin.core.Wallet;
 
 public class Bitten {
@@ -56,9 +56,10 @@ public class Bitten {
 		});
 	}
 
+	
 	public BlockStore getBlockStore(){
-		File f=new File("/home/alhazred/bitten.sqlite");
-		return new SqlBlockStore(Bitten.networkParameters,f);
+		String f="/home/alhazred/bitten.graph";
+		return new GraphBlockStore(Bitten.networkParameters,f);
 	}
 	
 	/**
@@ -85,20 +86,19 @@ public class Bitten {
 		
 		Wallet wallet = new Wallet(Bitten.networkParameters);
 		blockChain=new BlockChain(Bitten.networkParameters,wallet,getBlockStore());
-		SqlBlockStore store= (SqlBlockStore) getBlockStore();
 		 lblStatusBar = new StatusBar(blockChain);
-		final WalletView view=new WalletView(store.walletStore());
+		// final WalletView view=new WalletView(store.walletStore());
 		frame.getContentPane().add(lblStatusBar, BorderLayout.SOUTH);
-		ControlPanel panel=new ControlPanel(store,view);
+		// ControlPanel panel=new ControlPanel(store,view);
 
-			JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                    view, panel);
-			splitPane.setVisible(true);
-			splitPane.setOneTouchExpandable(true);
-			splitPane.setResizeWeight(1.0);
-			Dimension minimumSize = new Dimension(550, 500);
-			panel.setMinimumSize(minimumSize);
-		frame.getContentPane().add(splitPane, BorderLayout.CENTER);;
+	//		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+      //              view, panel);
+//			splitPane.setVisible(true);
+	//		splitPane.setOneTouchExpandable(true);
+		//	splitPane.setResizeWeight(1.0);
+//			Dimension minimumSize = new Dimension(550, 500);
+	//		panel.setMinimumSize(minimumSize);
+//		frame.getContentPane().add(splitPane, BorderLayout.CENTER);;
 		 frame.pack();           // layout components in window
 	     frame.setVisible(true); // show the window
 	     
@@ -127,7 +127,7 @@ public class Bitten {
 	 //   new Thread(r).start();
 		// frame.getContentPane().add(t, BorderLayout.CENTER);
 		downloader=new BlockChainDownloader(blockChain);
-	    // downloader.start();
+	    downloader.start();
 	}
 
 }

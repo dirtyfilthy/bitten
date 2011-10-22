@@ -55,6 +55,15 @@ public class TransactionInput extends Message implements Serializable {
         this.sequence = 0xFFFFFFFFL;
         this.parentTransaction = parentTransaction;
     }
+    
+    TransactionInput(NetworkParameters params){
+    	super(params);
+    	this.scriptBytes = null;
+        this.outpoint = new TransactionOutPoint(params, -1, null);
+        this.sequence = 0xFFFFFFFFL;
+        this.parentTransaction = null;
+    }
+    
 
     /** Creates an UNSIGNED input that links to the given output */
     TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
