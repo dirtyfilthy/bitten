@@ -116,6 +116,9 @@ public class GraphTransactionInput extends TransactionInput implements
 			}
 			node.createRelationshipTo(previousOutpoint, GraphRelationships.PREV_OUTPUT);
 			node.setProperty("value",(byte[]) previousOutpoint.getProperty("value"));
+			Relationship r=previousOutpoint.getSingleRelationship(GraphRelationships.TO_ADDRESS, Direction.OUTGOING);
+			Node addr=r.getEndNode();
+			node.createRelationshipTo(addr, GraphRelationships.FROM_ADDRESS);
 		}
 		else{
 			node.setProperty("value",coinbaseValue.toByteArray());

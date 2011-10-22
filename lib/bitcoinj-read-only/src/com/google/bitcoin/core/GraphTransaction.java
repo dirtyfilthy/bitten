@@ -82,7 +82,7 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		for(GraphTransactionOutput out : outputs){
 			out.index=i;
 			out.save(graph);
-			Relationship r=node.createRelationshipTo(out.node(), GraphRelationships.TRANSACTION_INPUT);
+			Relationship r=node.createRelationshipTo(out.node(), GraphRelationships.TRANSACTION_OUTPUT);
 			r.setProperty("index", out.index);
 			i++;
 		}

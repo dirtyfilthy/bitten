@@ -8,5 +8,7 @@ public enum GraphRelationships implements RelationshipType {
 	TRANSACTION_INPUT,
 	TRANSACTION_OUTPUT,
 	PREV_OUTPUT,
-	HAS_TRANSACTION
+	HAS_TRANSACTION,
+	FROM_ADDRESS,
+	TO_ADDRESS,
 }
