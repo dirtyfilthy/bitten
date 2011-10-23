@@ -9,14 +9,14 @@ import javax.swing.tree.TreePath;
 
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
-import com.google.bitcoin.core.SqlTransaction;
+import com.google.bitcoin.core.GraphTransaction;
 import com.google.bitcoin.core.Transaction;
 
 public class TransactionTableModel implements TreeTableModel {
 	private String[] columnNames = {"id","time","from","to"};
-	private ArrayList<SqlTransaction> transactions;
+	private ArrayList<GraphTransaction> transactions;
 	
-	TransactionTableModel(ArrayList<SqlTransaction> transactions){
+	TransactionTableModel(ArrayList<GraphTransaction> transactions){
 		this.transactions=transactions;
 		
 	}
@@ -37,7 +37,7 @@ public class TransactionTableModel implements TreeTableModel {
 	        return getValueAt(0, c).getClass();
 	}
 
-	private Object getTransactionValueAt(SqlTransaction t, int arg1){
+	private Object getTransactionValueAt(GraphTransaction t, int arg1){
 		switch(arg1){
 		case 0:
 			return t.getHash();

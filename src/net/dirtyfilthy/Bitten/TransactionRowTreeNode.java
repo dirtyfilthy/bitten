@@ -7,15 +7,16 @@ import javax.swing.tree.TreeNode;
 
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
-import com.google.bitcoin.core.SqlTransactionInput;
-import com.google.bitcoin.core.SqlTransactionOutput;
+import com.google.bitcoin.core.GraphTransactionInput;
+import com.google.bitcoin.core.GraphTransactionOutput;
+
 import com.google.bitcoin.core.Utils;
 
 public class TransactionRowTreeNode implements TreeTableNode {
 
 	private TreeTableNode parent;
-	public SqlTransactionInput input;
-	public SqlTransactionOutput output;
+	public GraphTransactionInput input;
+	public GraphTransactionOutput output;
 
 	
 	public TransactionRowTreeNode(TreeTableNode parent){
@@ -87,35 +88,35 @@ public class TransactionRowTreeNode implements TreeTableNode {
 				return "";
 			}
 			else{
-				if(input.getAddress()==null){
+				if(input.address()==null){
 					return "COINBASE";
 				}
 				else {
-					return input.getAddress().toString();
+					return input.address().toString();
 				}
 			}
 		case 3:
 			if(input==null){
 				return "";
 			}
-			return Utils.bitcoinValueToFriendlyString(BigInteger.valueOf(input.getBtcValue()));
+			return Utils.bitcoinValueToFriendlyString(input.value());
 		case 4:
 			if(output==null){
 				return "";
 			}
 			else{
-				if(output.getAddress()==null){
+				if(output.address()==null){
 					return "COINBASE";
 				}
 				else {
-					return output.getAddress().toString();
+					return output.address().toString();
 				}
 			}
 		case 5:
 			if(output==null){
 				return "";
 			}
-			return Utils.bitcoinValueToFriendlyString(BigInteger.valueOf(output.getBtcValue()));
+			return Utils.bitcoinValueToFriendlyString(output.value());
 		default:
 			return null;
 				

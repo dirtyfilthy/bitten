@@ -10,7 +10,7 @@ import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexManager;
 
 public class GraphTransactionInput extends TransactionInput implements
-		GraphSaveable, Nodeable {
+		GraphSaveable, Nodeable, Indexable, AddressListable {
 	
 	private Node node;
 	public BigInteger value;
@@ -59,6 +59,15 @@ public class GraphTransactionInput extends TransactionInput implements
 		index=(Long) node.getProperty("index");
 		
 	}
+	
+	public GraphAddress address(){
+			Relationship r=node.getSingleRelationship(GraphRelationships.FROM_ADDRESS, Direction.OUTGOING);
+			if(r==null){
+				return null;
+			}
+			return new GraphAddress(r.getEndNode());
+	}
+	
 	
 	public Node transactionNode(){
 		Relationship t=node.getSingleRelationship(GraphRelationships.TRANSACTION_INPUT, Direction.INCOMING);
@@ -124,6 +133,18 @@ public class GraphTransactionInput extends TransactionInput implements
 			node.setProperty("value",coinbaseValue.toByteArray());
 		}
 		node.setProperty("index",this.index);
+	}
+
+	@Override
+	public Long index() {
+		// TODO Auto-generated method stub
+		return index;
+	}
+
+	@Override
+	public BigInteger value() {
+		// TODO Auto-generated method stub
+		return value;
 	}
 
 }

@@ -1,11 +1,11 @@
 package com.google.bitcoin.core;
 
+import java.math.BigInteger;
+
 public interface AddressListable {
 	
-	long getAddressId();
+	public GraphAddress address();
 	
-	long getBtcValue();
-	
-	SqlAddress getAddress();
+	public BigInteger value();
 
 }
