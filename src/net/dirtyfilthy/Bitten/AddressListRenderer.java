@@ -14,7 +14,7 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 import com.google.bitcoin.core.AddressListable;
-import com.google.bitcoin.core.SqlAddress;
+import com.google.bitcoin.core.GraphAddress;
 import com.google.bitcoin.core.Utils;
 
 public class AddressListRenderer implements TableCellRenderer {
@@ -33,14 +33,14 @@ public class AddressListRenderer implements TableCellRenderer {
 		int i=0;
 		for(AddressListable l : list){
 			String add="COINBASE";
-			SqlAddress a;
-			a=l.getAddress();
-			long v=l.getBtcValue();
+			
+			GraphAddress  a=l.address();
+			BigInteger v=l.value();
 			
 			if(a!=null){
 				add=a.toString();
 			}
-			data[i]=new Object[] {add,Utils.bitcoinValueToFriendlyString(BigInteger.valueOf(v))};
+			data[i]=new Object[] {add,Utils.bitcoinValueToFriendlyString(v)};
 			i++;
 		}
 		JTable t=new JTable(new DefaultTableModel(data,columns));

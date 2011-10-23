@@ -5,7 +5,10 @@ import static com.google.bitcoin.core.Utils.reverseBytes;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -13,7 +16,7 @@ import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexManager;
 
 public class GraphTransaction extends Transaction implements GraphSaveable,
-		Nodeable {
+		Nodeable, Timeable {
 
 	
 	private Node node;
@@ -46,6 +49,83 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		this.lockTime=(Long) node.getProperty("lockTime");
 		this.createdAt=(Long) node.getProperty("createdAt");
 		
+	}
+	
+	
+	
+
+	public BigInteger incomingAmountForAddress(GraphAddress a){
+		BigInteger amount=BigInteger.ZERO;
+		for(TransactionOutput o : outputs){
+			GraphTransactionOutput o2=(GraphTransactionOutput) o;
+			if(o2.address().equals(a)){
+				amount=amount.add(o2.value);
+			}
+		}
+		return amount;
+	}
+	
+	public BigInteger outgoingAmountForAddress(GraphAddress a){
+		BigInteger amount=BigInteger.ZERO;
+		for(TransactionInput i : inputs){
+			GraphTransactionInput i2=(GraphTransactionInput) i;
+			if(i2.isCoinBase()){
+				continue;
+			}
+			if(i2.address().equals(a)){
+				amount=amount.add(i2.value);
+			}
+		}
+		return amount;
+	}
+	
+	public BigInteger incomingAmountForWallet(GraphWallet w){
+		BigInteger amount=BigInteger.ZERO;
+		for(TransactionOutput o : outputs){
+			GraphTransactionOutput o2=(GraphTransactionOutput) o;
+			if(o2.address().wallet().equals(w)){
+				amount=amount.add(o2.value);
+			}
+		}
+		return amount;
+	}
+	
+	public BigInteger outgoingAmountForWallet(GraphWallet w){
+		BigInteger amount=BigInteger.ZERO;
+		for(TransactionInput o : inputs){
+			GraphTransactionInput o2=(GraphTransactionInput) o;
+			if(o2.address().wallet().equals(w)){
+				amount=amount.add(o2.value);
+			}
+		}
+		return amount;
+	}
+
+
+	
+	public GraphTransaction(Node n){
+		super(NetworkParameters.prodNet());
+		this.node=n;
+		this.version=(Long) node.getProperty("version");
+		this.lockTime=(Long) node.getProperty("lockTime");
+		this.createdAt=(Long) node.getProperty("createdAt");
+		inputs=new ArrayList<GraphTransactionInput>();
+		outputs=new ArrayList<GraphTransactionOutput>();
+		for(Relationship r : node.getRelationships(Direction.OUTGOING, GraphRelationships.TRANSACTION_INPUT)){
+			Node n2=r.getEndNode();
+			inputs.add(new GraphTransactionInput(NetworkParameters.prodNet(),n2));
+		}
+		for(Relationship r : node.getRelationships(Direction.OUTGOING, GraphRelationships.TRANSACTION_OUTPUT)){
+			Node n2=r.getEndNode();
+			outputs.add(new GraphTransactionOutput(NetworkParameters.prodNet(),n2));
+		}
+		Collections.sort(inputs, Indexable.INDEX_ORDER);
+		Collections.sort(outputs, Indexable.INDEX_ORDER);
+		
+	}
+	
+	public boolean equals(Object o){
+		return o instanceof GraphTransaction && ((GraphTransaction) o).node().equals(node);
 	}
 
 
@@ -88,6 +168,16 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		}
 	}
 	
+	 /**
+     * A coinbase transaction is one that creates a new coin. They are the first transaction in each block and their
+     * value is determined by a formula that all implementations of BitCoin share. In 2011 the value of a coinbase
+     * transaction is 50 coins, but in future it will be less. A coinbase transaction is defined not only by its
+     * position in a block but by the data in the inputs.
+     */
+    public boolean isCoinBase() {
+        return inputs.get(0).isCoinBase();
+    }
+	
 
     void parse() throws ProtocolException {
         version = readUint32();
@@ -114,5 +204,11 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
         // Store a hash, it may come in useful later (want to avoid reserialization costs).
         hash = new Sha256Hash(reverseBytes(doubleDigest(bytes, offset, cursor - offset)));
     }
+
+	@Override
+	public Date time() {
+		
+		return new Date(createdAt*1000);
+	}
 
 }

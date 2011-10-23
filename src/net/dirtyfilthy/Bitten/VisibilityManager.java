@@ -7,22 +7,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.google.bitcoin.core.SqlTransaction;
+import com.google.bitcoin.core.GraphTransaction;
+
 
 public class VisibilityManager {
 	
-	protected HashMap<SqlTransaction,ArrayList<TransactionTreeTable>> transactionMap;
-	protected HashMap<SqlTransaction,Boolean> visibilityMap;
+	protected HashMap<GraphTransaction,ArrayList<TransactionTreeTable>> transactionMap;
+	protected HashMap<GraphTransaction,Boolean> visibilityMap;
 	protected WalletView view;
 	
 	VisibilityManager(WalletView view){
 		this.view=view;
-		this.transactionMap=new HashMap<SqlTransaction,ArrayList<TransactionTreeTable>>();
-		this.visibilityMap=new HashMap<SqlTransaction,Boolean>();
+		this.transactionMap=new HashMap<GraphTransaction,ArrayList<TransactionTreeTable>>();
+		this.visibilityMap=new HashMap<GraphTransaction,Boolean>();
 	}
 	
 	public synchronized void registerTable(TransactionTreeTable table){
-		for(SqlTransaction t : ((RootTransactionTreeNode) table.getTreeTableModel().getRoot()).list){
+		for(GraphTransaction t : ((RootTransactionTreeNode) table.getTreeTableModel().getRoot()).list){
 			if(transactionMap.containsKey(t)){
 				transactionMap.get(t).add(table);
 				setTransactionVisibilityForTable(table,t,visibilityMap.get(t).booleanValue());
@@ -40,13 +41,13 @@ public class VisibilityManager {
 	
 	
 	public synchronized void unregisterTable(TransactionTreeTable table){
-		 for(Iterator<Entry<SqlTransaction, ArrayList<TransactionTreeTable>>> it = transactionMap.entrySet().iterator(); it.hasNext(); ) {
-			 Map.Entry<SqlTransaction, ArrayList<TransactionTreeTable>> entry = it.next();
+		 for(Iterator<Entry<GraphTransaction, ArrayList<TransactionTreeTable>>> it = transactionMap.entrySet().iterator(); it.hasNext(); ) {
+			 Map.Entry<GraphTransaction, ArrayList<TransactionTreeTable>> entry = it.next();
 			ArrayList a=entry.getValue();
 			if(a.contains(table)){
 				a.remove(table);
 				if(a.size()==0){
-					SqlTransaction t=entry.getKey();
+					GraphTransaction t=entry.getKey();
 					it.remove();
 					if(visibilityMap.get(t)){
 						view.removeTransaction(t);
@@ -57,11 +58,11 @@ public class VisibilityManager {
 		}
 	}
 	
-	public void setTransactionVisibilityForTable(TransactionTreeTable table, SqlTransaction t, boolean visible){
+	public void setTransactionVisibilityForTable(TransactionTreeTable table, GraphTransaction t, boolean visible){
 		((RootTransactionTreeNode) table.getTreeTableModel().getRoot()).findNodeBySqlTransaction(t).setValueAtNoTrigger(visible, 6);
 	}
 	
-	public void setTransactionVisibility(SqlTransaction t, boolean visible){
+	public void setTransactionVisibility(GraphTransaction t, boolean visible){
 		if(!transactionMap.containsKey(t) || visibilityMap.get(t).booleanValue()==visible){
 			return;
 		}

@@ -8,7 +8,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 
 public class GraphTransactionOutput extends TransactionOutput implements
-		Nodeable, GraphSaveable {
+		Nodeable, GraphSaveable, Indexable, AddressListable {
 	
 	private GraphTransaction transaction;
 	private Node node;
@@ -60,6 +60,13 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		
 	}
 	
+	public GraphAddress address(){
+		Relationship r=node.getSingleRelationship(GraphRelationships.TO_ADDRESS, Direction.OUTGOING);
+		if(r==null){
+			return null;
+		}
+		return new GraphAddress(r.getEndNode());
+}
 	
 
 	@Override
@@ -87,6 +94,18 @@ public class GraphTransactionOutput extends TransactionOutput implements
 	public Node node() {
 		// TODO Auto-generated method stub
 		return node;
+	}
+
+	@Override
+	public Long index() {
+		// TODO Auto-generated method stub
+		return index;
+	}
+
+	@Override
+	public BigInteger value() {
+		// TODO Auto-generated method stub
+		return value;
 	}
 
 }

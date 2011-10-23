@@ -7,17 +7,17 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import com.google.bitcoin.core.SqlBlockStore;
-import com.google.bitcoin.core.SqlWallet;
+import com.google.bitcoin.core.GraphBlockStore;
+import com.google.bitcoin.core.GraphWallet;
 
 public class ControlPanel extends JTabbedPane implements TableModelListener {
 	private SearchPanel searchPanel;
-	private SqlBlockStore store;
+	private GraphBlockStore store;
 	private WalletView view;
 	private VisibilityManager visibilityManager;
 	
 	
-	public ControlPanel(SqlBlockStore store, WalletView view) {
+	public ControlPanel(GraphBlockStore store, WalletView view) {
 		super();
 		this.store=store;
 		this.view=view;
@@ -39,9 +39,8 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		this.setSelectedIndex(this.getTabCount()-1);
 	}
 	
-	public void showWallet(long wallet_id){
-		SqlWallet w=store.walletStore().findById(wallet_id);
-		WalletSearchResultPanel results=new WalletSearchResultPanel(this,store,wallet_id);
+	public void showWallet(GraphWallet w){
+		WalletSearchResultPanel results=new WalletSearchResultPanel(this,w);
 		this.addTab(StringUtils.truncateText(w.label(),8),results);
 		setTabComponentAt(this.getTabCount()-1,new ButtonTabComponent(this));
 		this.setSelectedIndex(this.getTabCount()-1);
@@ -73,13 +72,9 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		return view;
 	}
 
-	public WalletStore getWalletStore() {
-		// TODO Auto-generated method stub
-		return store.walletStore();
-	}
 	
 
-	public SqlBlockStore getBlockStore() {
+	public GraphBlockStore getBlockStore() {
 		// TODO Auto-generated method stub
 		return store;
 	}

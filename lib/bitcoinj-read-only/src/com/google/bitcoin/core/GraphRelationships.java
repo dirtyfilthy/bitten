@@ -11,4 +11,6 @@ public enum GraphRelationships implements RelationshipType {
 	HAS_TRANSACTION,
 	FROM_ADDRESS,
 	TO_ADDRESS,
+	HAS_ADDRESS,
+	PAYMENT,
 }

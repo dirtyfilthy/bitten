@@ -11,41 +11,42 @@ import javax.swing.tree.TreeNode;
 
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
-import com.google.bitcoin.core.SqlAddress;
-import com.google.bitcoin.core.SqlTransaction;
-import com.google.bitcoin.core.SqlTransactionInput;
-import com.google.bitcoin.core.SqlTransactionOutput;
-import com.google.bitcoin.core.SqlWallet;
+import com.google.bitcoin.core.GraphAddress;
+import com.google.bitcoin.core.GraphTransaction;
+import com.google.bitcoin.core.GraphTransactionInput;
+import com.google.bitcoin.core.GraphTransactionOutput;
+import com.google.bitcoin.core.GraphWallet;
+
 import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Utils;
 
 public class TransactionTreeNode implements TreeTableNode {
-	public SqlTransaction transaction;
+	public GraphTransaction transaction;
 	public boolean visible=false;
 	private ControlPanel panel;
 	ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
 	TreeTableNode parent;
-	TransactionTreeNode(TreeTableNode parent, ControlPanel p, SqlTransaction t){
+	TransactionTreeNode(TreeTableNode parent, ControlPanel p, GraphTransaction t){
 		transaction=t;
 		panel=p;
 		this.parent=parent;
-		ArrayList<TransactionInput> inputs=transaction.inputs;
-		ArrayList<TransactionOutput> outputs=transaction.outputs;
+		ArrayList<GraphTransactionInput> inputs=transaction.inputs;
+		ArrayList<GraphTransactionOutput> outputs=transaction.outputs;
 		int size=inputs.size() > outputs.size() ? inputs.size() : outputs.size();
 		int c=0;
 		
-		SqlTransactionInput i;
-		SqlTransactionOutput o;
+		GraphTransactionInput i;
+		GraphTransactionOutput o;
 		while(c<size){
 			TransactionRowTreeNode n=new TransactionRowTreeNode(this);
 			i=null;
 			o=null;
 			if(c<inputs.size()){
-				i=(SqlTransactionInput) inputs.get(c);
+				i= inputs.get(c);
 			}
 			if(c<outputs.size()){
-				o=(SqlTransactionOutput) outputs.get(c);
+				o=outputs.get(c);
 			}
 			n.input=i;
 			n.output=o;
@@ -109,7 +110,7 @@ public class TransactionTreeNode implements TreeTableNode {
 
 	@Override
 	public Object getValueAt(int arg0) {
-		SqlAddress i;
+		GraphAddress i;
 		// TODO Auto-generated method stub
 		switch(arg0){
 		case 0:
@@ -123,70 +124,65 @@ public class TransactionTreeNode implements TreeTableNode {
 				return label;
 			}
 			else{
-				i=((SqlTransactionInput) transaction.inputs.get(0)).getAddress();
-				SqlWallet w=panel.getWalletStore().findById(i.walletId);
-				if(w!=null){
-					return w.label();
-				}
-				return i.toString();
+				i=transaction.inputs.get(0).address();
+				return i.wallet().label();
 			}
 		case 3:
-			long amt=0;
-			for(TransactionInput inp : transaction.inputs){
-				SqlTransactionInput inp2=(SqlTransactionInput) inp;
-				amt=amt+inp2.value;
+			BigInteger amt=BigInteger.ZERO;
+			for(GraphTransactionInput inp : transaction.inputs){
+				amt=amt.add(inp.value);
 			}
-			return Utils.bitcoinValueToFriendlyString(BigInteger.valueOf(amt));
+			return Utils.bitcoinValueToFriendlyString(amt);
 		case 4:
-			ArrayList<SqlAddress> addresses = new ArrayList<SqlAddress>();
-			long iw;
+			ArrayList<GraphWallet> wallets = new ArrayList<GraphWallet>();
+			GraphWallet iw;
+			String l2="";
 			if(transaction.isCoinBase()){
 				i=null;
-				iw=-1;
+				iw=null;
+				l2="COINBASE";
 			}
 			else{
-				i=((SqlTransactionInput) transaction.inputs.get(0)).getAddress();
-				iw=i.getWalletId();
+				i=transaction.inputs.get(0).address();
+				iw=i.wallet();
+				l2=i.toString();
 			}
-			for(TransactionOutput out : transaction.outputs){
-				SqlTransactionOutput out2=(SqlTransactionOutput) out;
-				SqlAddress a=out2.getAddress();
-				if(addresses.contains(a) || a==i || (a.getWalletId()!=0 && a.getWalletId()==iw)){
+			
+			for(GraphTransactionOutput out : transaction.outputs){
+				GraphWallet w=out.address().wallet();
+				if(w.equals(iw) || wallets.contains(w)){
 					continue;
 				}
-				addresses.add(a);
+				wallets.add(w);
 			}
-			String l2="";
-			if(addresses.size()==0){
+			if(wallets.size()==0){
 				return "*SELF*";
 			}
-			for(SqlAddress s : addresses){
-				SqlWallet w=panel.getWalletStore().findById(s.walletId);
-				if(w!=null){
+			boolean first=true;
+			for(GraphWallet w : wallets){
+				if(!first){
 					l2=l2+w.label()+" ";
 				}
 				else{
-					l2=l2+s.toString();
+					l2=w.label();
+					first=false;
 				}
 			}
-			return l2;
+			
+			return l2.toString();
 		case 5:
-			if(transaction.isCoinBase()){
-				i=null;
+			//if(transaction.isCoinBase()){
+			//	i=null;
+			//}
+			//else{
+			//	i=((SqlTransactionInput) transaction.inputs.get(0)).getAddress();
+			//}
+			BigInteger amt2=BigInteger.ZERO;
+			for(GraphTransactionOutput out : transaction.outputs){
+				
+				amt2=amt2.add(out.value());
 			}
-			else{
-				i=((SqlTransactionInput) transaction.inputs.get(0)).getAddress();
-			}
-			long amt2=0;
-			for(TransactionOutput out : transaction.outputs){
-				SqlTransactionOutput out2=(SqlTransactionOutput) out;
-				SqlAddress a=out2.getAddress();
-				if(i!=null && (a==i || (a.getWalletId()!=0 && a.getWalletId()==i.getWalletId()))){
-					continue;
-				}
-				amt2=amt2+out2.getBtcValue();
-			}
-			return Utils.bitcoinValueToFriendlyString(BigInteger.valueOf(amt2));
+			return Utils.bitcoinValueToFriendlyString(amt2);
 		case 6:
 			return visible;
 		default:

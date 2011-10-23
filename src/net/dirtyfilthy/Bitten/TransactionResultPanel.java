@@ -9,6 +9,7 @@ import java.util.Arrays;
 import javax.swing.BoxLayout;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 
 import org.jdesktop.swingx.JXTreeTable;
@@ -17,33 +18,28 @@ import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
 import com.google.bitcoin.core.Accountable;
-import com.google.bitcoin.core.SqlAddress;
-import com.google.bitcoin.core.SqlBlockStore;
-import com.google.bitcoin.core.SqlTransaction;
-import com.google.bitcoin.core.SqlTransactionOutput;
+import com.google.bitcoin.core.GraphTransaction;
+
 import com.google.bitcoin.core.TransactionOutput;
 
 public class TransactionResultPanel extends ResultSetPanel implements Closeable {
-	protected ArrayList<SqlTransaction> transactions;
+	protected ArrayList<GraphTransaction> transactions;
 	protected TransactionTreeTable table;
 	protected ControlPanel panel;
 	protected TransactionInfoPanel info;
 	protected TransactionOptionsPanel options;
 	public Accountable target;
 	
-	TransactionResultPanel(ControlPanel p,SqlBlockStore s,PreparedStatement query){
-		super();
-		this.query=query;
-		this.store=s;
+	TransactionResultPanel(ControlPanel p,SwingWorker<ArrayList<GraphTransaction>, Object> task){
+		super(task);
 		this.panel=p;
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		transactions=new ArrayList<SqlTransaction>();
 	}
 	
 
 	
 	@Override
-	protected void processResultSet(ArrayList<SqlTransaction> transactions) {
+	protected void processResultSet(ArrayList<GraphTransaction> transactions) {
 		System.out.println("process transactions");
 	
 			
@@ -58,7 +54,7 @@ public class TransactionResultPanel extends ResultSetPanel implements Closeable 
 			table=new TransactionTreeTable(panel, treeTableModel);
 			table.setTreeCellRenderer(new AddressTreeCellRenderer(target));
 			
-			RolloverController controller = new HighlightRolloverController(panel.getView());
+			// RolloverController controller = new HighlightRolloverController(panel.getView());
 			//table=new JTable(m);
 			table.setVisible(true);
 			//controller.install(table);

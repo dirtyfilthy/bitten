@@ -121,6 +121,10 @@ public class GraphBlockStore implements BlockStore {
 	        }
 	    } );
 	}
+	
+	public GraphAddress findOrCreateAddress(String base58hash) throws AddressFormatException{
+		return GraphAddress.findOrCreateAddress(graph, params, base58hash);
+	}
 
 	public StoredBlock getByHeight(int i) {
 		Index<Node> blockIndex=indexer.forNodes("blocks");

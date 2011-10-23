@@ -229,7 +229,7 @@ public class Utils {
         return new BigInteger(buf);
     } 
     
-    
+     
 
     // The representation of nBits uses another home-brew encoding, as a way to represent a large
     // hash value in only 32 bits.
@@ -243,10 +243,14 @@ public class Utils {
         return decodeMPI(bytes);
     }
     
-    public static double btcToDouble(long btc){
-    	return ((double) btc)/((double) 100000000);
+    public static double btcToDouble(BigInteger incomingAmount){
+    	return new BigDecimal(incomingAmount).divide(new BigDecimal(100000000)).doubleValue();
     	
     }
+
+	public static double btcToDouble(long amt) {
+		return (double) amt/(double) 100000000;
+	}
 }
 
 

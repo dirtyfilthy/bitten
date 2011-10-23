@@ -48,6 +48,7 @@ public class GraphBlock extends StoredBlock implements Nodeable, GraphSaveable {
 			t.save(graph);
 			Relationship r=node.createRelationshipTo(t.node(), GraphRelationships.HAS_TRANSACTION);
 			r.setProperty("index",t.index);
+			GraphWallet.processTransaction(t);
 		}
 	} 
 	

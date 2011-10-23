@@ -11,7 +11,6 @@ import org.jdesktop.swingx.tree.DefaultXTreeCellRenderer;
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
 import com.google.bitcoin.core.Accountable;
-import com.google.bitcoin.core.SqlAddress;
 
 public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 
@@ -29,7 +28,7 @@ public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 		 		if((value instanceof TransactionTreeNode) && (value != null) && (target!=null)) {
 		 			TransactionTreeNode t=(TransactionTreeNode) value;
 		 			URL img;
-		 			if(target.incomingAmount(t.transaction)>target.outgoingAmount(t.transaction)){
+		 			if(target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>0){
 		 				img=this.getClass().getResource("/icons/incoming.png");
 		 			}
 		 			else{

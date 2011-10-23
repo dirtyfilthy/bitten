@@ -9,30 +9,29 @@ import java.util.ArrayList;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.SwingWorker;
 
-import com.google.bitcoin.core.SqlBlockStore;
-import com.google.bitcoin.core.SqlTransaction;
+import com.google.bitcoin.core.GraphTransaction;
+
 
 public abstract class ResultSetPanel extends JPanel implements PropertyChangeListener{
 	
-	protected SearchBlockStoreTask task;
 	protected PreparedStatement query;
 	protected JProgressBar progress;
-	protected SqlBlockStore store;
+	protected SwingWorker<ArrayList<GraphTransaction>, Object> task;
 	
 	ResultSetPanel(){
 		
 	}
 	
-	ResultSetPanel(SqlBlockStore store, PreparedStatement query){
-		this.query=query;
-		this.store=store;
+	ResultSetPanel(SwingWorker<ArrayList<GraphTransaction>, Object> task){
+		this.task=task;	
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent arg0) {
 		if(arg0.getPropertyName().equals("resultset")){
-			processResultSet((ArrayList<SqlTransaction>) arg0.getNewValue());
+			processResultSet((ArrayList<GraphTransaction>) arg0.getNewValue());
 			progress.setVisible(false);
 		}
 		
@@ -51,11 +50,10 @@ public abstract class ResultSetPanel extends JPanel implements PropertyChangeLis
 	
 	public void execute(){
 		createStatusBar();
-		task=new SearchBlockStoreTask(store, query,"resultset");
 		task.addPropertyChangeListener(this);
 		task.execute();
 	}
 	
-	protected abstract void processResultSet(ArrayList<SqlTransaction> r);
+	protected abstract void processResultSet(ArrayList<GraphTransaction> arrayList);
 
 }
