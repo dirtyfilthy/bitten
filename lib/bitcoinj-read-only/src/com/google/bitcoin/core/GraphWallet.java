@@ -2,6 +2,7 @@ package com.google.bitcoin.core;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -9,6 +10,9 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ReturnableEvaluator;
+import org.neo4j.graphdb.StopEvaluator;
+import org.neo4j.graphdb.Traverser.Order;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.IndexManager;
@@ -38,6 +42,7 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 				org.neo4j.graphdb.Transaction tx = graph.beginTx();
 				try{
 					coinbaseWallet=new GraphWallet();
+					coinbaseWallet.label="COINBASE";
 					coinbaseWallet.save(graph);
 					namedNodes.add(coinbaseWallet.node(),"name", "coinbaseWallet");
 					tx.success();
@@ -89,6 +94,19 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 	
 	public boolean equals(Object rhs){
 		return rhs instanceof GraphWallet && ((GraphWallet) rhs).node().equals(node);
+	}
+	
+	public ArrayList<GraphAddress> addresses(){
+		ArrayList<GraphAddress> list=new ArrayList<GraphAddress>();
+		Collection<Node> nodeList= node.traverse( Order.BREADTH_FIRST,
+			     StopEvaluator.DEPTH_ONE, ReturnableEvaluator.ALL_BUT_START_NODE,
+			     GraphRelationships.HAS_ADDRESS, Direction.OUTGOING ).getAllNodes();
+		
+		for(Node n : nodeList){
+			list.add(new GraphAddress(n));
+		}
+		Collections.sort(list,Nodeable.NODE_ORDER);
+		return list;
 	}
 	
 	public static void processTransaction(GraphTransaction t){
@@ -143,6 +161,28 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 		Index<Node> walletIndex=index.forNodes("wallets");
 		Iterator<Relationship> i=rhs.node().getRelationships(Direction.OUTGOING,GraphRelationships.HAS_ADDRESS).iterator();
 		ArrayList<Relationship> toDelete=new ArrayList<Relationship>();
+		boolean needsSave=false;
+		if(!rhs.label.equals("")){
+			if(label.equals("")){
+				label=rhs.label;
+			}
+			else{
+				label=label+", "+rhs.label;
+			}
+			needsSave=true;
+		}
+		if(!rhs.notes.equals("")){
+			if(notes.equals("")){
+				notes=rhs.notes;
+			}
+			else{
+				notes=notes+", "+rhs.notes;
+			}
+			needsSave=true;
+		}
+		if(needsSave){
+			save(node.getGraphDatabase());
+		}
 		while(i.hasNext()){
 			Relationship r=i.next();
 			Node addr=r.getEndNode();
@@ -203,6 +243,11 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 	public String label() {
 		if(!label.equals("")){
 			return label;
+		}
+		for(GraphAddress a : addresses()){
+			if(!a.label.equals("")){
+				return label;
+			}
 		}
 		return Long.valueOf(node.getId()).toString();
 	}

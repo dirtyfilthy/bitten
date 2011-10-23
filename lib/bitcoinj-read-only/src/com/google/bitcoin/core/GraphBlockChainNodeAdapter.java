@@ -41,7 +41,7 @@ public class GraphBlockChainNodeAdapter implements Nodeable {
 						new GraphBlockHeader(params, genesisHeader.bitcoinSerialize()), genesisHeader.getWork(), 0);
 				System.out.println("genesis "+storedGenesis.getHeader().getHashAsString());
 				storedGenesis.save(graph);
-				namedNodes.add(node, "name", "genesis");
+				namedNodes.add(storedGenesis.node(), "name", "genesis");
 				setChainHead(storedGenesis);
 				
 			} catch (ProtocolException e) {
