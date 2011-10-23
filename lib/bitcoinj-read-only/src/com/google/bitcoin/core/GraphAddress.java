@@ -35,8 +35,14 @@ public class GraphAddress extends Address implements GraphSaveable, Nodeable, Ac
 	public GraphAddress(Node a) {
 		super(NetworkParameters.prodNet(),(byte[]) a.getProperty("hash"));
 		node=a;
-		label=(String) a.getProperty("label");
-		notes=(String) a.getProperty("notes");
+		if(node.hasProperty("label")){
+			label=(String) a.getProperty("label");
+			notes=(String) a.getProperty("notes");
+		}
+		else{
+			label="";
+			notes="";
+		}
 	}
 
 	@Override
@@ -57,8 +63,16 @@ public class GraphAddress extends Address implements GraphSaveable, Nodeable, Ac
 			address=new GraphAddress(a);
 		}
 		else{
-			address=new GraphAddress(p,base58hash);
-			address.save(graph);
+			org.neo4j.graphdb.Transaction tx = graph.beginTx();
+			try{
+				address=new GraphAddress(p,base58hash);
+				address.save(graph);
+				tx.success();
+			}
+			finally{
+				tx.finish();
+				
+			}
 		}
 		// cache.put(base58hash, address);
 		return address;
@@ -101,6 +115,8 @@ public class GraphAddress extends Address implements GraphSaveable, Nodeable, Ac
 	public void save(GraphDatabaseService graph) {
 		IndexManager index=graph.index();
 		Index<Node> addressIndex=index.forNodes("addresses");
+		org.neo4j.graphdb.Transaction tx = graph.beginTx();
+		try{
 		if(node==null){
 			node=graph.createNode();
 			node.setProperty("hash",this.getHash160());
@@ -113,12 +129,20 @@ public class GraphAddress extends Address implements GraphSaveable, Nodeable, Ac
 			w.node().createRelationshipTo(node, GraphRelationships.HAS_ADDRESS);
 		}
 		else{
-			node.removeProperty("label");
-			node.removeProperty("notes");
+			if(node.hasProperty("label")){
+				node.removeProperty("label");
+				node.removeProperty("notes");
+			}
+			node.setProperty("label",label);
+			node.setProperty("notes",notes);
 			addressIndex.remove(node,"hash");
 			addressIndex.remove(node,"label");
 			addressIndex.add(node,"hash",this.toString());
 			addressIndex.add(node,"label",label);
+		}
+		tx.success();
+		} finally {
+			tx.finish();
 		}
 		
 		
