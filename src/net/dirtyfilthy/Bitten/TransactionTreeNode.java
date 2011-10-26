@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 
+import javax.swing.Icon;
 import javax.swing.tree.TreeNode;
 
 import org.jdesktop.swingx.treetable.TreeTableNode;
@@ -25,6 +26,9 @@ public class TransactionTreeNode implements TreeTableNode {
 	public GraphTransaction transaction;
 	public boolean visible=false;
 	private ControlPanel panel;
+	public Icon icon;
+	String incomingAmount;
+	String outgoingAmount;
 	ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
 	TreeTableNode parent;
 	TransactionTreeNode(TreeTableNode parent, ControlPanel p, GraphTransaction t){
@@ -128,11 +132,14 @@ public class TransactionTreeNode implements TreeTableNode {
 				return i.wallet().label();
 			}
 		case 3:
-			BigInteger amt=BigInteger.ZERO;
-			for(GraphTransactionInput inp : transaction.inputs){
-				amt=amt.add(inp.value);
+			if(incomingAmount==null){
+				BigInteger amt=BigInteger.ZERO;
+				for(GraphTransactionInput inp : transaction.inputs){
+					amt=amt.add(inp.value);
+				}
+				incomingAmount=Utils.bitcoinValueToFriendlyString(amt);
 			}
-			return Utils.bitcoinValueToFriendlyString(amt);
+			return incomingAmount;
 		case 4:
 			ArrayList<GraphWallet> wallets = new ArrayList<GraphWallet>();
 			GraphWallet iw;
@@ -161,7 +168,7 @@ public class TransactionTreeNode implements TreeTableNode {
 			boolean first=true;
 			for(GraphWallet w : wallets){
 				if(!first){
-					l2=l2+w.label()+" ";
+					l2=l2+" "+w.label();
 				}
 				else{
 					l2=w.label();
@@ -171,18 +178,31 @@ public class TransactionTreeNode implements TreeTableNode {
 			
 			return l2.toString();
 		case 5:
+			if(outgoingAmount!=null){
+				return outgoingAmount;
+			}
 			//if(transaction.isCoinBase()){
 			//	i=null;
 			//}
 			//else{
 			//	i=((SqlTransactionInput) transaction.inputs.get(0)).getAddress();
 			//}
+			GraphWallet w;
 			BigInteger amt2=BigInteger.ZERO;
-			for(GraphTransactionOutput out : transaction.outputs){
-				
-				amt2=amt2.add(out.value());
+			if(transaction.isCoinBase()){
+				w=null;
 			}
-			return Utils.bitcoinValueToFriendlyString(amt2);
+			else{
+				i=transaction.inputs.get(0).address();
+				w=i.wallet();
+			}
+			for(GraphTransactionOutput out : transaction.outputs){
+				if(!out.address().wallet().equals(w)){
+					amt2=amt2.add(out.value());
+				}
+			}
+			outgoingAmount= Utils.bitcoinValueToFriendlyString(amt2);
+			return outgoingAmount;
 		case 6:
 			return visible;
 		default:

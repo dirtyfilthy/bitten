@@ -23,23 +23,31 @@ public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 	} 
 	
 	
-	
-	 public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-		 		if((value instanceof TransactionTreeNode) && (value != null) && (target!=null)) {
-		 			TransactionTreeNode t=(TransactionTreeNode) value;
-		 			URL img;
-		 			if(target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>0){
-		 				img=this.getClass().getResource("/icons/incoming.png");
-		 			}
-		 			else{
-		 				img=this.getClass().getResource("/icons/outgoing.png");
-		 			}
-		 			setIcon(new javax.swing.ImageIcon(img));	
-		 			
-		 		}
-		 		else {
-		 			setIcon(null);
-		 		}
+
+	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+		if((value instanceof TransactionTreeNode) && (value != null) && (target!=null)) {
+			TransactionTreeNode t=(TransactionTreeNode) value;
+			if(t.icon==null){
+				URL img;
+				if(t.transaction.isCoinBase()){
+					img=this.getClass().getResource("/icons/coinbase.png");
+				}
+				else{
+					if(target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>0){
+						img=this.getClass().getResource("/icons/incoming.png");
+					}
+					else{
+						img=this.getClass().getResource("/icons/outgoing.png");
+					}
+				}
+				t.icon=new javax.swing.ImageIcon(img);
+			}
+			setIcon(t.icon);	
+
+		}
+		else {
+			setIcon(null);
+		}
 		 		
 		 		//we can not call super.getTreeCellRendererComponent method, since it overrides our setIcon call and cause rendering of labels to '...' when node expansion is done
 

@@ -12,7 +12,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexManager;
 
-public class GraphAddress extends Address implements GraphSaveable, Nodeable, Accountable {
+public class GraphAddress extends Address implements Noteable, Nodeable, Accountable {
 
 	private Node node;
 	public String label="";
@@ -35,14 +35,17 @@ public class GraphAddress extends Address implements GraphSaveable, Nodeable, Ac
 	public GraphAddress(Node a) {
 		super(NetworkParameters.prodNet(),(byte[]) a.getProperty("hash"));
 		node=a;
+		label="";
+		notes="";
 		if(node.hasProperty("label")){
 			label=(String) a.getProperty("label");
-			notes=(String) a.getProperty("notes");
 		}
-		else{
-			label="";
-			notes="";
+		if(node.hasProperty("notes")){
+			label=(String) a.getProperty("notes");
 		}
+		
+			
+		
 	}
 
 	@Override
@@ -120,25 +123,46 @@ public class GraphAddress extends Address implements GraphSaveable, Nodeable, Ac
 		if(node==null){
 			node=graph.createNode();
 			node.setProperty("hash",this.getHash160());
-			node.setProperty("label",label);
-			node.setProperty("notes",notes);
+			if(!label.equals("")){
+				node.setProperty("label",label);
+				addressIndex.add(node, "label", label);
+			}
+			if(!notes.equals("")){
+				node.setProperty("notes",notes);
+			}
+			
 			addressIndex.add(node,"hash",this.toString());
-			addressIndex.add(node,"label",label);
 			GraphWallet w=new GraphWallet();
+			if(!label.equals("")){
+				w.label=label;
+				w.notes=notes;
+			}
 			w.save(graph);
 			w.node().createRelationshipTo(node, GraphRelationships.HAS_ADDRESS);
 		}
 		else{
 			if(node.hasProperty("label")){
 				node.removeProperty("label");
+				addressIndex.remove(node,"label");
+			}
+			if(node.hasProperty("notes")){
 				node.removeProperty("notes");
 			}
-			node.setProperty("label",label);
-			node.setProperty("notes",notes);
-			addressIndex.remove(node,"hash");
-			addressIndex.remove(node,"label");
-			addressIndex.add(node,"hash",this.toString());
-			addressIndex.add(node,"label",label);
+			if(!label.equals("")){
+				node.setProperty("label",label);
+				addressIndex.add(node, "label", label);
+			}
+			if(!notes.equals("")){
+				node.setProperty("notes",notes);
+			}
+		
+			
+			GraphWallet w=wallet();
+			if(!label.equals("") && w.label.equals("")){
+				w.label=label;
+				w.notes=notes;
+				w.save(graph);
+			}
 		}
 		tx.success();
 		} finally {
@@ -158,6 +182,36 @@ public class GraphAddress extends Address implements GraphSaveable, Nodeable, Ac
 	public BigInteger outgoingAmount(GraphTransaction t) {
 		// TODO Auto-generated method stub
 		return t.outgoingAmountForAddress(this);
+	}
+
+	@Override
+	public void setLabel(String label) {
+		this.label=label;
+		
+	}
+
+	
+	
+	@Override
+	public void setNotes(String notes) {
+		this.notes=notes;
+		
+	}
+
+	@Override
+	public String getLabel() {
+		// TODO Auto-generated method stub
+		return label;
+	}
+
+	@Override
+	public String getNotes() {
+		// TODO Auto-generated method stub
+		return notes;
+	}
+	
+	public void save(){
+		save(node().getGraphDatabase());
 	}
 
 }

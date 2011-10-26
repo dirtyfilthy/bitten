@@ -129,7 +129,7 @@ public class Bitten {
 	 //   new Thread(r).start();
 		// frame.getContentPane().add(t, BorderLayout.CENTER);
 		downloader=new BlockChainDownloader(blockChain);
-	 //   downloader.start();
+	    downloader.start();
 	}
 
 }

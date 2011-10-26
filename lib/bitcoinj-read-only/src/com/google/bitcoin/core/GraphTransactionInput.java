@@ -21,6 +21,7 @@ public class GraphTransactionInput extends TransactionInput implements
 	GraphTransactionInput(NetworkParameters params,
 			Transaction parentTransaction, byte[] scriptBytes) {
 		super(params, parentTransaction, scriptBytes);
+		
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -33,10 +34,10 @@ public class GraphTransactionInput extends TransactionInput implements
 		super(params,parentTransaction,output);
 	}
 	
-	public GraphTransactionInput(NetworkParameters params, Node n){
-		super(params);
-		node=n;
-		value=BigInteger.ZERO;
+	public TransactionOutPoint outpoint(){
+		if(outpoint!=null){
+			return outpoint;
+		}
 		Relationship prevOutputRelationship=node.getSingleRelationship(GraphRelationships.PREV_OUTPUT,Direction.OUTGOING);
 		if(prevOutputRelationship!=null){
 			Node o=prevOutputRelationship.getEndNode();
@@ -53,9 +54,26 @@ public class GraphTransactionInput extends TransactionInput implements
 				throw new RuntimeException("Should never happen!!!");
 			}
 		}
-		value=new BigInteger((byte[]) node.getProperty("value"));
-		sequence=(Long) node.getProperty("sequence");
-		scriptBytes=(byte[]) node.getProperty("scriptBytes");
+		return outpoint;
+	}
+	
+	public byte[] getScriptBytes() {
+		 if(scriptBytes==null){
+			 scriptBytes=(byte[]) node.getProperty("scriptBytes");
+		 }
+	     return scriptBytes;
+	 }
+	
+	public GraphTransactionInput(NetworkParameters params, Node n){
+		super(params);
+		node=n;
+		
+		// outpoint is lazy loaded by the outpoint() method, most of the time we don't need it 
+		
+		value=BigInteger.valueOf((Long) node.getProperty("value"));
+		// sequence=(Long) node.getProperty("sequence"); #never use this
+		coinbase=(Boolean) node.getProperty("coinbase");
+		// scriptBytes=(byte[]) node.getProperty("scriptBytes"); lazy load script bytes instead
 		index=(Long) node.getProperty("index");
 		
 	}
@@ -103,9 +121,9 @@ public class GraphTransactionInput extends TransactionInput implements
 		if(node==null){
 			node=graph.createNode();
 		}
-		node.setProperty("sequence", sequence);
-		node.setProperty("isCoinBase", isCoinBase());
-		node.setProperty("scriptBytes", scriptBytes);
+		// node.setProperty("sequence", sequence);
+		node.setProperty("coinbase", isCoinBase());
+		// node.setProperty("scriptBytes", scriptBytes);
 		
 		if(!isCoinBase()){
 			Node transactionNode=transactionIndex.get("hash", Utils.bytesToHexString(outpoint.hash)).getSingle();
@@ -124,13 +142,15 @@ public class GraphTransactionInput extends TransactionInput implements
 				throw new RuntimeException("Can't find output index  when looking for outpoint - "+Utils.bytesToHexString(outpoint.hash)+" : "+outpoint.index);
 			}
 			node.createRelationshipTo(previousOutpoint, GraphRelationships.PREV_OUTPUT);
-			node.setProperty("value",(byte[]) previousOutpoint.getProperty("value"));
+			node.setProperty("value",(Long) previousOutpoint.getProperty("value"));
 			Relationship r=previousOutpoint.getSingleRelationship(GraphRelationships.TO_ADDRESS, Direction.OUTGOING);
-			Node addr=r.getEndNode();
-			node.createRelationshipTo(addr, GraphRelationships.FROM_ADDRESS);
+			if(r!=null){
+				Node addr=r.getEndNode();
+				node.createRelationshipTo(addr, GraphRelationships.FROM_ADDRESS);
+			}
 		}
 		else{
-			node.setProperty("value",coinbaseValue.toByteArray());
+			node.setProperty("value",coinbaseValue.longValue());
 		}
 		node.setProperty("index",this.index);
 	}
@@ -145,6 +165,10 @@ public class GraphTransactionInput extends TransactionInput implements
 	public BigInteger value() {
 		// TODO Auto-generated method stub
 		return value;
+	}
+	
+	public void save(){
+		save(node().getGraphDatabase());
 	}
 
 }

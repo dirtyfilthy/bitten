@@ -4,6 +4,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import org.neo4j.graphdb.Direction;
@@ -17,8 +19,13 @@ import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.IndexManager;
 
-public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
+public class GraphWallet implements Noteable, Nodeable, Accountable {
 
+	public final static Comparator<GraphWallet> ADDRESS_COUNT_ORDER = new Comparator<GraphWallet>() {
+        public int compare(GraphWallet t1, GraphWallet t2) {
+            return -t1.addressCount().compareTo(t2.addressCount());
+        }
+	};
 	
 	private Node node;
 	public String notes="";
@@ -59,8 +66,12 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 	
 	public GraphWallet(Node n) {
 		node=n;
-		label=(String) n.getProperty("label");
-		notes=(String) n.getProperty("notes");
+		notes="";
+		label="";
+		if(n.hasProperty("label"))
+			label=(String) n.getProperty("label");
+		if(n.hasProperty("notes"))
+			notes=(String) n.getProperty("notes");
 
 	}
 
@@ -76,24 +87,34 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 		Index<Node> walletIndex=index.forNodes("wallets");
 		if(node==null){
 			node=graph.createNode();
-			node.setProperty("label", label);
-			node.setProperty("notes", notes);
-			walletIndex.add(node,"label",label);
 			
 		}
-		else{
+		if(node.hasProperty("label")){
 			node.removeProperty("label");
-			node.setProperty("label", label);
+			walletIndex.remove(node,"label");
+		}
+		if(node.hasProperty("notes")){
 			node.removeProperty("notes");
-			node.setProperty("notes", notes);
-			walletIndex.remove(node, "label");
+		}
+		if(!label.equals("")){
+			node.setProperty("label",label);
 			walletIndex.add(node, "label", label);
+		}
+		if(!notes.equals("")){
+			node.setProperty("notes",notes);
 		}
 
 	}
 	
 	public boolean equals(Object rhs){
 		return rhs instanceof GraphWallet && ((GraphWallet) rhs).node().equals(node);
+	}
+	
+	public Integer addressCount(){
+		if(node.hasProperty("addressCount")){
+			return (Integer) node.getProperty("addressCount");
+		}
+		return 1;
 	}
 	
 	public ArrayList<GraphAddress> addresses(){
@@ -113,7 +134,7 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 		long time=t.createdAt;
 		ArrayList<GraphWallet> wallets=new ArrayList<GraphWallet>();
 		for(GraphTransactionInput i : t.inputs){
-			if(i.isCoinBase()){
+			if(i.isCoinBase() || i.address()==null){
 				continue;
 			}
 			GraphWallet w=i.address().wallet();
@@ -121,9 +142,12 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 				wallets.add(w);
 			}
 		}
+		
 		GraphWallet main;
 		if(wallets.size()!=0){
+			Collections.sort(wallets,ADDRESS_COUNT_ORDER);
 			main=wallets.get(0);
+			System.out.println("main wallet merge count="+main.addressCount());
 			for(int i=1;i<wallets.size();i++){
 				System.out.println("merging wallet "+wallets.get(i));
 				main.mergeWallet(wallets.get(i));
@@ -213,8 +237,9 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 			r.delete();
 		}
 		walletIndex.remove(rhs.node());
+		node.setProperty("addresses",this.addressCount()+rhs.addressCount());
 		rhs.node().delete();
-		System.out.println("deleteing "+rhs.node().getId());
+		System.out.println("deleting "+rhs.node().getId());
 		
 	}
 
@@ -231,9 +256,14 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 	
 	public ArrayList<GraphTransaction> transactions() {
 		ArrayList<GraphTransaction> list=new ArrayList<GraphTransaction>();
+		HashMap<Node,Boolean> contains=new HashMap<Node,Boolean>();
 		for(Relationship r : node.getRelationships(Direction.BOTH, GraphRelationships.PAYMENT)){
 			Node n=node().getGraphDatabase().getNodeById((Long) r.getProperty("transaction_id"));
-			list.add(new GraphTransaction(n));
+			GraphTransaction t=new GraphTransaction(n);
+			if(!contains.containsKey(t.node())){
+				list.add(t);
+				contains.put(t.node(), true);
+			}
 		}
 		Collections.sort(list, Timeable.TIME_ORDER);
 		return list;
@@ -244,12 +274,35 @@ public class GraphWallet implements GraphSaveable, Nodeable, Accountable {
 		if(!label.equals("")){
 			return label;
 		}
-		for(GraphAddress a : addresses()){
-			if(!a.label.equals("")){
-				return label;
-			}
-		}
 		return Long.valueOf(node.getId()).toString();
+	}
+
+	@Override
+	public void setLabel(String label) {
+		this.label=label;
+		
+	}
+
+	@Override
+	public void setNotes(String notes) {
+		this.notes=notes;
+		
+	}
+
+	@Override
+	public String getLabel() {
+		// TODO Auto-generated method stub
+		return label;
+	}
+
+	@Override
+	public String getNotes() {
+		// TODO Auto-generated method stub
+		return notes;
+	}
+	
+	public void save(){
+		save(node().getGraphDatabase());
 	}
 		
 
