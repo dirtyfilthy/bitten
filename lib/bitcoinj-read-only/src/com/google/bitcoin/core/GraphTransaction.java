@@ -81,10 +81,9 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 	
 	public BigInteger incomingAmountForWallet(GraphWallet w){
 		BigInteger amount=BigInteger.ZERO;
-		for(TransactionOutput o : outputs){
-			GraphTransactionOutput o2=(GraphTransactionOutput) o;
-			if(o2.address().wallet().equals(w)){
-				amount=amount.add(o2.value);
+		for(GraphTransactionOutput o : outputs){
+			if(o.address().wallet().equals(w)){
+				amount=amount.add(o.value);
 			}
 		}
 		return amount;
@@ -92,10 +91,12 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 	
 	public BigInteger outgoingAmountForWallet(GraphWallet w){
 		BigInteger amount=BigInteger.ZERO;
-		for(TransactionInput o : inputs){
-			GraphTransactionInput o2=(GraphTransactionInput) o;
-			if(o2.address().wallet().equals(w)){
-				amount=amount.add(o2.value);
+		if(this.isCoinBase() || !inputs.get(0).address().wallet().equals(w)){
+			return amount;
+		}
+		for(GraphTransactionInput o : inputs){
+			if(o.address().wallet().equals(w)){
+				amount=amount.add(o.value);
 			}
 		}
 		return amount;
@@ -106,9 +107,17 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 	public GraphTransaction(Node n){
 		super(NetworkParameters.prodNet());
 		this.node=n;
+		
+		/* 
+		we never use these
 		this.version=(Long) node.getProperty("version");
 		this.lockTime=(Long) node.getProperty("lockTime");
-		this.createdAt=(Long) node.getProperty("createdAt");
+		
+		*/
+		
+		this.createdAt=(Long) node.getProperty("time");
+		
+		
 		inputs=new ArrayList<GraphTransactionInput>();
 		outputs=new ArrayList<GraphTransactionOutput>();
 		for(Relationship r : node.getRelationships(Direction.OUTGOING, GraphRelationships.TRANSACTION_INPUT)){
@@ -140,9 +149,9 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		if(node==null){
 			node=graph.createNode();
 		}
-		node.setProperty("version", this.version);
-		node.setProperty("lockTime", this.lockTime);
-		node.setProperty("createdAt", this.createdAt);
+		// node.setProperty("version", this.version);
+		// node.setProperty("lockTime", this.lockTime);
+		node.setProperty("time", this.createdAt);
 		node.setProperty("hash", this.getHash().hash);
 		node.setProperty("index", this.index);
 		IndexManager index=graph.index();
@@ -204,11 +213,19 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
         // Store a hash, it may come in useful later (want to avoid reserialization costs).
         hash = new Sha256Hash(reverseBytes(doubleDigest(bytes, offset, cursor - offset)));
     }
+    
+    public int hashCode() {
+    	return node().hashCode();
+    }
 
 	@Override
 	public Date time() {
 		
 		return new Date(createdAt*1000);
+	}
+	
+	public void save(){
+		save(node().getGraphDatabase());
 	}
 
 }

@@ -21,6 +21,7 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		super();
 		this.store=store;
 		this.view=view;
+		// this.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		this.visibilityManager=new VisibilityManager(view);
 		searchPanel=new SearchPanel(this);
 		searchPanel.setVisible(true);

@@ -1,12 +1,16 @@
 package com.google.bitcoin.core;
 
+import java.util.Map;
+
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexManager; 
+import org.neo4j.graphdb.traversal.TraversalDescription;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.neo4j.kernel.impl.index.IndexStore;
+import org.neo4j.kernel.impl.traversal.TraversalDescriptionImpl;
 
 public class GraphBlockStore implements BlockStore {
 	
@@ -18,8 +22,8 @@ public class GraphBlockStore implements BlockStore {
 	
 	
 	public GraphBlockStore(NetworkParameters n, String path){ 
-	
-		graph = new EmbeddedGraphDatabase( path );
+		Map<String, String> config = EmbeddedGraphDatabase.loadConfigurations("/home/alhazred/neo4j.properties" );
+		graph = new EmbeddedGraphDatabase( path,config );
 		indexer = graph.index();
 		params = n;
 		

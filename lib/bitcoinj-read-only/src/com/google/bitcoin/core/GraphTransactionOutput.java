@@ -24,12 +24,19 @@ public class GraphTransactionOutput extends TransactionOutput implements
        
     }
 	
+	 public byte[] getScriptBytes() {
+		 if(scriptBytes==null){
+			 scriptBytes=(byte[]) node.getProperty("scriptBytes");
+		 }
+	     return scriptBytes;
+	 }
+	
 	public GraphTransactionOutput(NetworkParameters params, Node n) {
 		super(params);
 		node=n;
 		transaction=null;
-		value=new BigInteger((byte[]) node.getProperty("value"));
-		scriptBytes=(byte[]) node.getProperty("scriptBytes");
+		value=BigInteger.valueOf((Long) node.getProperty("value"));
+		// lazy load script bytes in getScriptBytes() 
 		index=(Long) node.getProperty("index");
 	}
 	
@@ -74,8 +81,8 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		if(node==null){
 			node=graph.createNode();
 		}
-		node.setProperty("value",value.toByteArray());
-		node.setProperty("scriptBytes",scriptBytes);
+		node.setProperty("value",value.longValue());
+		// node.setProperty("scriptBytes",scriptBytes);
 		node.setProperty("index",index);
 		try {
 			GraphAddress a=GraphAddress.findOrCreateAddress(graph, params, getToAddress().toString());
@@ -106,6 +113,10 @@ public class GraphTransactionOutput extends TransactionOutput implements
 	public BigInteger value() {
 		// TODO Auto-generated method stub
 		return value;
+	}
+	
+	public void save(){
+		save(node().getGraphDatabase());
 	}
 
 }

@@ -96,5 +96,9 @@ public class GraphBlock extends StoredBlock implements Nodeable, GraphSaveable {
 		// TODO Auto-generated method stub
 		return node;
 	}
+	
+	public void save(){
+		save(node().getGraphDatabase());
+	}
 
 }

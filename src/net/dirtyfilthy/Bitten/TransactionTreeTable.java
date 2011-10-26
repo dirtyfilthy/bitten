@@ -55,9 +55,18 @@ public class TransactionTreeTable extends JXTreeTable {
 		            Object c=path.getLastPathComponent();
 		            if(c instanceof TransactionRowTreeNode){
 		            	TransactionRowTreeNode node=(TransactionRowTreeNode) c;
-		            	String address=node.output.address().toString();
-		            	System.out.println("address "+address);
-		            	panel.searchAddress(address);
+		            	if(column==4){
+		            		
+		            		String address=node.output.address().toString();
+		            		System.out.println("address "+address);
+		            		panel.searchAddress(address);
+		            	}
+		            	else if(column==2 && !node.input.isCoinBase()){
+		            		
+		            		String address=node.input.address().toString();
+		            		System.out.println("address "+address);
+		            		panel.searchAddress(address);
+		            	}
 		            	
 		            }
 		            else if(c instanceof TransactionTreeNode){
@@ -66,6 +75,13 @@ public class TransactionTreeTable extends JXTreeTable {
 		            		GraphTransactionOutput o=node.transaction.outputs.get(0);
 		     
 		            		panel.showWallet(o.address().wallet());
+		           
+		            	}
+		            	if(column==2){
+		            		GraphTransactionInput o=node.transaction.inputs.get(0);
+		            		if(!node.transaction.isCoinBase()){
+		            			panel.showWallet(o.address().wallet());
+		            		}
 		           
 		            	}
 		            	

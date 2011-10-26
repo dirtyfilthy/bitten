@@ -38,6 +38,8 @@ import prefuse.data.Graph;
 import prefuse.data.Node;
 import prefuse.data.Table;
 import prefuse.data.Tuple;
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.EdgeRenderer;
 import prefuse.render.LabelRenderer;
@@ -59,12 +61,15 @@ public class WalletView extends Display {
 		this.setBackground(new Color(0, 0, 0));
 		int[] palette = new int[] { ColorLib.rgb(255, 180, 180),
 				ColorLib.rgb(190, 190, 255), ColorLib.rgb(190, 190, 0) };
+		int coinbaseColor=ColorLib.rgb(0, 0, 255);
 		highlightedTuples = new ArrayList<Tuple>();
 		walletNodeTable = new Table();
 		walletEdgeTable = new Table();
 		walletNodeTable.addColumn("id", long.class);
 		walletNodeTable.addColumn("label", String.class);
+		walletNodeTable.addColumn("coinbase", boolean.class);
 		walletEdgeTable.addColumn("btc", long.class);
+	
 		
 		walletEdgeTable.addColumn("source", long.class);
 		walletEdgeTable.addColumn("target", long.class);
@@ -106,12 +111,14 @@ public class WalletView extends Display {
 		// use light grey for edges
 		ColorAction stroke = new ColorAction("graph.nodes",
 				VisualItem.STROKECOLOR, ColorLib.rgb(0, 0, 0));
+		// stroke.add("coinbase", coinbaseColor);
 		stroke.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
 		ColorAction edges = new ColorAction("graph.edges",
 				VisualItem.STROKECOLOR, ColorLib.gray(200));
 		edges.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
 		ColorAction fill2 = new ColorAction("graph.edges",
 				VisualItem.FILLCOLOR, ColorLib.gray(200));
+		// fill2.add("coinbase", coinbaseColor);
 		fill2.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
 		DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc_d");
 
@@ -139,7 +146,7 @@ public class WalletView extends Display {
 			                repaint();
 			           }
 			        }, "show force panel", KeyStroke.getKeyStroke("alt F"),
-			               WHEN_FOCUSED);
+			        WHEN_IN_FOCUSED_WINDOW );
 
 			
 		this.setHighQuality(true);
@@ -157,12 +164,17 @@ public class WalletView extends Display {
 		}
 		n.setLong(0, w.node().getId());
 		n.setString(1, w.label());
+		if(w.equals(GraphWallet.coinbaseWallet(w.node().getGraphDatabase()))){
+			n.setBoolean(2,true);
+		}
+		else{
+			n.setBoolean(2,false);
+		}
 		return n;
 	}
 	
 	public void removeOutputEdge(GraphWallet source, GraphWallet target, long amount) {
-		System.out.println("Removing edge src " + source + " dst " + target
-				+ " btc " + amount);
+		
 		Node sourceNode = graph.getNodeFromKey(source.node().getId());
 		System.out.println("source node " + sourceNode);
 		Node targetNode = graph.getNodeFromKey(target.node().getId());
@@ -191,8 +203,6 @@ public class WalletView extends Display {
 	}
 
 	public Edge addOutputEdge(GraphWallet source, GraphWallet target, long amount) {
-		System.out.println("Adding edge src " + source + " dst " + target
-				+ " btc " + amount);
 		Node sourceNode = graph.getNodeFromKey(source.node().getId());
 		System.out.println("source node " + sourceNode);
 		Node targetNode = graph.getNodeFromKey(target.node().getId());
@@ -205,20 +215,19 @@ public class WalletView extends Display {
 			edge.setDouble(3, Utils.btcToDouble(edge.getLong(0) + amount));
 			edge.setLong(0, edge.getLong(0) + amount);
 		}
-		java.util.Iterator<Edge> i = graph.edges();
-		while (i.hasNext()) {
-			System.out.println("edge: " + i.next());
-		}
 		return edge;
 	}
 
 	public void removeTransaction(GraphTransaction transaction) {
 		synchronized (viz) {
+			GraphWallet source;
 			if (transaction.inputs.get(0).isCoinBase()) {
-				return;
+				return; 
+				//source=GraphWallet.coinbaseWallet(transaction.node().getGraphDatabase());
 			}
-			System.out.println("Removing transaction");
-			GraphWallet source = transaction.inputs.get(0).address().wallet();
+			else{
+				source = transaction.inputs.get(0).address().wallet();
+			}
 			ArrayList<Long> targetKeys = new ArrayList<Long>();
 
 			for (GraphTransactionOutput o : transaction.outputs) {
@@ -236,12 +245,14 @@ public class WalletView extends Display {
 	public void addTransaction(GraphTransaction transaction) {
 		Node srcNode;
 		synchronized (viz) {
+			GraphWallet source;
 			if (transaction.inputs.get(0).isCoinBase()) {
+				// source = GraphWallet.coinbaseWallet(transaction.node().getGraphDatabase());
 				return;
 			}
-			System.out.println("Adding transaction");
-			GraphWallet source = transaction.inputs.get(0).address().wallet();
-			
+			else{
+				source = transaction.inputs.get(0).address().wallet();
+			}
 			ArrayList<Long> targetKeys = new ArrayList<Long>();
 		
 			srcNode = findOrCreateWalletNode(source);
@@ -253,6 +264,7 @@ public class WalletView extends Display {
 			}
 
 		}
+		viz.run("layout");
 		viz.run("color");
 	}
 	
