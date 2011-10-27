@@ -50,14 +50,14 @@ public class BitcoinSerializer
     private NetworkParameters params;
     private boolean usesChecksumming;
 
-    private static Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>,String>();
+    protected static Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>,String>();
     private static Map<String, Constructor<? extends Message>>
             messageConstructors = new HashMap<String, Constructor<? extends Message>>();
 
     static {
         names.put(VersionMessage.class, "version");
         names.put(InventoryMessage.class, "inv");
-        names.put(Block.class, "block");
+        names.put(GraphBlockHeader.class, "block");
         names.put(GetDataMessage.class, "getdata");
         names.put(Transaction.class, "tx");
         names.put(AddressMessage.class, "addr");

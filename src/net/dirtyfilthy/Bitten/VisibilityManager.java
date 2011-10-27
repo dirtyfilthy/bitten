@@ -7,24 +7,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.swing.SwingUtilities;
+import com.google.bitcoin.core.GraphTransaction;
 
-import com.google.bitcoin.core.SqlTransaction;
 
 public class VisibilityManager {
 	
-	protected HashMap<SqlTransaction,ArrayList<TransactionTreeTable>> transactionMap;
-	protected HashMap<SqlTransaction,Boolean> visibilityMap;
+	protected HashMap<GraphTransaction,ArrayList<TransactionTreeTable>> transactionMap;
+	protected HashMap<GraphTransaction,Boolean> visibilityMap;
 	protected WalletView view;
 	
 	VisibilityManager(WalletView view){
 		this.view=view;
-		this.transactionMap=new HashMap<SqlTransaction,ArrayList<TransactionTreeTable>>();
-		this.visibilityMap=new HashMap<SqlTransaction,Boolean>();
+		this.transactionMap=new HashMap<GraphTransaction,ArrayList<TransactionTreeTable>>();
+		this.visibilityMap=new HashMap<GraphTransaction,Boolean>();
 	}
 	
-	public synchronized void registerTable(final TransactionTreeTable table){
-		for(SqlTransaction t : ((RootTransactionTreeNode) table.getTreeTableModel().getRoot()).list){
+	public synchronized void registerTable(TransactionTreeTable table){
+		for(GraphTransaction t : ((RootTransactionTreeNode) table.getTreeTableModel().getRoot()).list){
 			if(transactionMap.containsKey(t)){
 				transactionMap.get(t).add(table);
 				setTransactionVisibilityForTable(table,t,visibilityMap.get(t).booleanValue());
@@ -36,22 +35,19 @@ public class VisibilityManager {
 				visibilityMap.put(t, false);
 			}
 		}
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run(){
-				table.repaint();
-			}
-		});
+		table.repaint();
+		
 	}
 	
 	
 	public synchronized void unregisterTable(TransactionTreeTable table){
-		 for(Iterator<Entry<SqlTransaction, ArrayList<TransactionTreeTable>>> it = transactionMap.entrySet().iterator(); it.hasNext(); ) {
-			 Map.Entry<SqlTransaction, ArrayList<TransactionTreeTable>> entry = it.next();
+		 for(Iterator<Entry<GraphTransaction, ArrayList<TransactionTreeTable>>> it = transactionMap.entrySet().iterator(); it.hasNext(); ) {
+			 Map.Entry<GraphTransaction, ArrayList<TransactionTreeTable>> entry = it.next();
 			ArrayList a=entry.getValue();
 			if(a.contains(table)){
 				a.remove(table);
 				if(a.size()==0){
-					SqlTransaction t=entry.getKey();
+					GraphTransaction t=entry.getKey();
 					it.remove();
 					if(visibilityMap.get(t)){
 						view.removeTransaction(t);
@@ -62,21 +58,18 @@ public class VisibilityManager {
 		}
 	}
 	
-	public void setTransactionVisibilityForTable(TransactionTreeTable table, SqlTransaction t, boolean visible){
+	public void setTransactionVisibilityForTable(TransactionTreeTable table, GraphTransaction t, boolean visible){
 		((RootTransactionTreeNode) table.getTreeTableModel().getRoot()).findNodeBySqlTransaction(t).setValueAtNoTrigger(visible, 6);
 	}
 	
-	public void setTransactionVisibility(SqlTransaction t, boolean visible){
+	public void setTransactionVisibility(GraphTransaction t, boolean visible){
 		if(!transactionMap.containsKey(t) || visibilityMap.get(t).booleanValue()==visible){
 			return;
 		}
-		final ArrayList<TransactionTreeTable> toRepaint=new ArrayList<TransactionTreeTable>();
 		ArrayList<TransactionTreeTable> tables=transactionMap.get(t);
 		for(TransactionTreeTable table : tables){
 			setTransactionVisibilityForTable(table,t,visible);
-			if(!toRepaint.contains(table)){
-				toRepaint.add(table);
-			}
+			table.repaint();
 		}
 		if(visible){
 			view.addTransaction(t);
@@ -84,15 +77,7 @@ public class VisibilityManager {
 		else{
 			view.removeTransaction(t);
 		}
-		
 		visibilityMap.put(t, visible);
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run(){
-				for(TransactionTreeTable t : toRepaint){
-					t.repaint();
-				}
-			}
-		});
 	}
 	
 

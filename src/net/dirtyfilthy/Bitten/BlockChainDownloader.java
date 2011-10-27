@@ -12,6 +12,7 @@ import com.google.bitcoin.core.BlockChainListener;
 import com.google.bitcoin.core.DnsDiscovery;
 import com.google.bitcoin.core.IrcDiscovery;
 import com.google.bitcoin.core.NetworkConnection;
+import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Peer;
 import com.google.bitcoin.core.PeerDiscovery;
 import com.google.bitcoin.core.PeerDiscoveryException;
@@ -29,7 +30,7 @@ public class BlockChainDownloader extends Thread {
 
 	public void run(){
 	
-		PeerDiscovery peerDiscovery=new SeedPeers(Bitten.networkParameters);
+		PeerDiscovery peerDiscovery=new SeedPeers(NetworkParameters.prodNet());
 		try {
 			while(true){
 			InetSocketAddress addresses[]=peerDiscovery.getPeers();

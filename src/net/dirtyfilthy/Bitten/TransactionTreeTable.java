@@ -19,9 +19,9 @@ import org.jdesktop.swingx.renderer.StringValues;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
 import com.google.bitcoin.core.Accountable;
-import com.google.bitcoin.core.SqlTransaction;
-import com.google.bitcoin.core.SqlTransactionInput;
-import com.google.bitcoin.core.SqlTransactionOutput;
+import com.google.bitcoin.core.GraphTransactionInput;
+import com.google.bitcoin.core.GraphTransactionOutput;
+import com.google.bitcoin.core.GraphWallet;
 import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutput;
 
@@ -55,18 +55,34 @@ public class TransactionTreeTable extends JXTreeTable {
 		            Object c=path.getLastPathComponent();
 		            if(c instanceof TransactionRowTreeNode){
 		            	TransactionRowTreeNode node=(TransactionRowTreeNode) c;
-		            	String address=node.output.getAddress().toString();
-		            	System.out.println("address "+address);
-		            	panel.searchAddress(address);
+		            	if(column==4){
+		            		
+		            		String address=node.output.address().toString();
+		            		System.out.println("address "+address);
+		            		panel.searchAddress(address);
+		            	}
+		            	else if(column==2 && !node.input.isCoinBase()){
+		            		
+		            		String address=node.input.address().toString();
+		            		System.out.println("address "+address);
+		            		panel.searchAddress(address);
+		            	}
 		            	
 		            }
 		            else if(c instanceof TransactionTreeNode){
 		            	TransactionTreeNode node=(TransactionTreeNode) c;
 		            	if(column==4){
-		            		SqlTransactionOutput o=(SqlTransactionOutput) node.transaction.outputs.get(0);
-		            		if(o.getAddress().walletId!=0){
-		            			panel.showWallet(o.getAddress().walletId);
+		            		GraphTransactionOutput o=node.transaction.outputs.get(0);
+		     
+		            		panel.showWallet(o.address().wallet());
+		           
+		            	}
+		            	if(column==2){
+		            		GraphTransactionInput o=node.transaction.inputs.get(0);
+		            		if(!node.transaction.isCoinBase()){
+		            			panel.showWallet(o.address().wallet());
 		            		}
+		           
 		            	}
 		            	
 		            }
@@ -83,28 +99,28 @@ public class TransactionTreeTable extends JXTreeTable {
 				Object obj=e.getPath().getLastPathComponent();
 				if(obj instanceof TransactionRowTreeNode){
 			    	TransactionRowTreeNode n=(TransactionRowTreeNode) obj;
-			    	SqlTransactionInput input=(SqlTransactionInput) ((TransactionTreeNode) n.getParent()).transaction.inputs.get(0);
+			    	GraphTransactionInput input=((TransactionTreeNode) n.getParent()).transaction.inputs.get(0);
 			    	if(input.isCoinBase() || n.output==null){
 			    		return;
 			    	}
-			    	long source=input.getAddress().getWalletId();
-			    	long target=n.output.getAddress().getWalletId();
+			    	GraphWallet source=input.address().wallet();
+			    	GraphWallet target=n.output.address().wallet();
 			    	System.out.println("highlighting nodes "+source+" "+target);
 			    	panel.getView().clearHighlights();
-			    	panel.getView().highlightNodes(source,target);
+			    	//panel.getView().highlightNodes(source,target);
 			    }
 				else if(obj instanceof TransactionTreeNode){
 			    	TransactionTreeNode n=(TransactionTreeNode) obj;
 			    	
 			    	
-			    	SqlTransactionInput in=(SqlTransactionInput) n.transaction.inputs.get(0);
+			    	GraphTransactionInput in= n.transaction.inputs.get(0);
 			    	if(in.isCoinBase()){
 			    		return;
 			    	}
 			    	panel.getView().clearHighlights();
-			    	long source=in.getAddress().getWalletId();
-			    	for(TransactionOutput o : n.transaction.outputs){
-			    		long target=((SqlTransactionOutput) o).getAddress().getWalletId();
+			    	GraphWallet source=in.address().wallet();
+			    	for(GraphTransactionOutput o : n.transaction.outputs){
+			    		GraphWallet target=o.address().wallet();
 			    		panel.getView().highlightNodes(source,target);
 			    	}
 			    	

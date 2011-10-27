@@ -18,8 +18,8 @@ import javax.swing.JLabel;
 
 import com.google.bitcoin.core.BlockChain;
 import com.google.bitcoin.core.BlockStore;
+import com.google.bitcoin.core.GraphBlockStore;
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.SqlBlockStore;
 import com.google.bitcoin.core.Wallet;
 
 public class Bitten {
@@ -56,9 +56,10 @@ public class Bitten {
 		});
 	}
 
-	public BlockStore getBlockStore(){
-		File f=new File("/home/alhazred/bitten.sqlite");
-		return new SqlBlockStore(Bitten.networkParameters,f);
+	
+	public GraphBlockStore getBlockStore(){
+		String f="/home/alhazred/bitten.graph";
+		return new GraphBlockStore(Bitten.networkParameters,f);
 	}
 	
 	/**
@@ -67,6 +68,7 @@ public class Bitten {
 	 */
 	public Bitten() throws SQLException {
 		initialize();
+		
 	}
 
 	/**
@@ -78,20 +80,20 @@ public class Bitten {
 		frame = new JFrame();
 		frame.setExtendedState(Frame.MAXIMIZED_BOTH);  
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		// frame.getContentPane().setLayout(new BorderLayout(0, 0));
+		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 		
 		
 		// we don't care about the wallet
 		
 		Wallet wallet = new Wallet(Bitten.networkParameters);
-		blockChain=new BlockChain(Bitten.networkParameters,wallet,getBlockStore());
-		SqlBlockStore store= (SqlBlockStore) getBlockStore();
+		GraphBlockStore store = getBlockStore();
+		blockChain=new BlockChain(Bitten.networkParameters,wallet, store);
 		 lblStatusBar = new StatusBar(blockChain);
-		final WalletView view=new WalletView(store.walletStore());
+		final WalletView view=new WalletView();
 		frame.getContentPane().add(lblStatusBar, BorderLayout.SOUTH);
 		ControlPanel panel=new ControlPanel(store,view);
 
-			JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                     view, panel);
 			splitPane.setVisible(true);
 			splitPane.setOneTouchExpandable(true);
@@ -127,7 +129,7 @@ public class Bitten {
 	 //   new Thread(r).start();
 		// frame.getContentPane().add(t, BorderLayout.CENTER);
 		downloader=new BlockChainDownloader(blockChain);
-	    // downloader.start();
+	    downloader.start();
 	}
 
 }

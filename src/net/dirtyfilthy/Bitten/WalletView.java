@@ -9,13 +9,12 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.text.html.HTMLDocument.Iterator;
 
-import com.google.bitcoin.core.SqlAddress;
-import com.google.bitcoin.core.SqlTransaction;
-import com.google.bitcoin.core.SqlTransactionInput;
-import com.google.bitcoin.core.SqlTransactionOutput;
+import com.google.bitcoin.core.GraphAddress;
+import com.google.bitcoin.core.GraphTransaction;
+import com.google.bitcoin.core.GraphTransactionOutput;
+import com.google.bitcoin.core.GraphWallet;
 import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.core.WalletIdable;
@@ -39,6 +38,8 @@ import prefuse.data.Graph;
 import prefuse.data.Node;
 import prefuse.data.Table;
 import prefuse.data.Tuple;
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.EdgeRenderer;
 import prefuse.render.LabelRenderer;
@@ -54,20 +55,21 @@ public class WalletView extends Display {
 	private Graph graph;
 	private Visualization viz;
 	private ArrayList<Tuple> highlightedTuples;
-	private WalletStore walletStore;
 	private ForceDirectedLayout forceDirected;
 
-	WalletView(WalletStore s) {
-		walletStore=s;
+	WalletView() {
 		this.setBackground(new Color(0, 0, 0));
 		int[] palette = new int[] { ColorLib.rgb(255, 180, 180),
 				ColorLib.rgb(190, 190, 255), ColorLib.rgb(190, 190, 0) };
+		int coinbaseColor=ColorLib.rgb(0, 0, 255);
 		highlightedTuples = new ArrayList<Tuple>();
 		walletNodeTable = new Table();
 		walletEdgeTable = new Table();
 		walletNodeTable.addColumn("id", long.class);
 		walletNodeTable.addColumn("label", String.class);
+		walletNodeTable.addColumn("coinbase", boolean.class);
 		walletEdgeTable.addColumn("btc", long.class);
+	
 		
 		walletEdgeTable.addColumn("source", long.class);
 		walletEdgeTable.addColumn("target", long.class);
@@ -109,12 +111,14 @@ public class WalletView extends Display {
 		// use light grey for edges
 		ColorAction stroke = new ColorAction("graph.nodes",
 				VisualItem.STROKECOLOR, ColorLib.rgb(0, 0, 0));
+		// stroke.add("coinbase", coinbaseColor);
 		stroke.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
 		ColorAction edges = new ColorAction("graph.edges",
 				VisualItem.STROKECOLOR, ColorLib.gray(200));
 		edges.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
 		ColorAction fill2 = new ColorAction("graph.edges",
 				VisualItem.FILLCOLOR, ColorLib.gray(200));
+		// fill2.add("coinbase", coinbaseColor);
 		fill2.add(VisualItem.HIGHLIGHT, ColorLib.rgb(255, 255, 0));
 		DataSizeAction edgeWidth = new DataSizeAction("graph.edges", "btc_d");
 
@@ -138,14 +142,11 @@ public class WalletView extends Display {
 		
 		registerKeyboardAction(new ActionListener  () {
 			        public void actionPerformed(ActionEvent   e) {
-			        	SwingUtilities.invokeLater(new Runnable() {
-			        		public void run(){
-			        			JForcePanel.showForcePanel(forceDirected.getForceSimulator());
-			        			repaint();
-			        		}
-			           });
-			        }}, "show force panel", KeyStroke.getKeyStroke("ctrl F"),
-			               WHEN_FOCUSED);
+			        	JForcePanel.showForcePanel(forceDirected.getForceSimulator());
+			                repaint();
+			           }
+			        }, "show force panel", KeyStroke.getKeyStroke("alt F"),
+			        WHEN_IN_FOCUSED_WINDOW );
 
 			
 		this.setHighQuality(true);
@@ -155,21 +156,31 @@ public class WalletView extends Display {
 
 	}
 
-	public Node findOrCreateWalletNode(long id) {
-		System.out.println("adding node " + id);
-		Node n = graph.getNodeFromKey(id);
+	public Node findOrCreateWalletNode(GraphWallet w) {
+		System.out.println("adding node " + w.node().getId());
+		Node n = graph.getNodeFromKey(w.node().getId());
 		if (n == null) {
 			n = graph.addNode();
 		}
-		label=walletStore.findById(id).label();
-		n.setLong(0, id);
-		n.setString(1, label);
+		n.setLong(0, w.node().getId());
+		n.setString(1, w.label());
+		if(w.equals(GraphWallet.coinbaseWallet(w.node().getGraphDatabase()))){
+			n.setBoolean(2,true);
+		}
+		else{
+			n.setBoolean(2,false);
+		}
 		return n;
 	}
 	
-	public void removeOutputEdge(long source, long target, long amount) {
-		Node sourceNode = graph.getNodeFromKey(source);
-		Node targetNode = graph.getNodeFromKey(target);
+	public void removeOutputEdge(GraphWallet source, GraphWallet target, long amount) {
+		
+		Node sourceNode = graph.getNodeFromKey(source.node().getId());
+		System.out.println("source node " + sourceNode);
+		Node targetNode = graph.getNodeFromKey(target.node().getId());
+		if(sourceNode==null || targetNode == null){
+			return;
+		}
 		Edge edge = graph.getEdge(sourceNode, targetNode);
 		long amt = edge.getLong(0);
 		amt = amt - amount;
@@ -178,20 +189,23 @@ public class WalletView extends Display {
 			edge.setDouble(3, Utils.btcToDouble(amt));
 			
 		} else {
+			System.out.println("removing edge");
 			graph.removeEdge(edge);
 		}
 		if (!sourceNode.edges().hasNext()) {
 			graph.removeNode(sourceNode);
 		}
-		if (!targetNode.edges().hasNext()) {
+		targetNode = graph.getNodeFromKey(target.node().getId());
+		if (targetNode!=null && !targetNode.edges().hasNext()) {
 			graph.removeNode(targetNode);
 		}
+
 	}
 
-	public Edge addOutputEdge(long source, long target, long amount) {
-		Node sourceNode = graph.getNodeFromKey(source);
+	public Edge addOutputEdge(GraphWallet source, GraphWallet target, long amount) {
+		Node sourceNode = graph.getNodeFromKey(source.node().getId());
 		System.out.println("source node " + sourceNode);
-		Node targetNode = graph.getNodeFromKey(target);
+		Node targetNode = graph.getNodeFromKey(target.node().getId());
 		Edge edge = graph.getEdge(sourceNode, targetNode);
 		if (edge == null) {
 			edge = graph.addEdge(sourceNode, targetNode);
@@ -204,20 +218,22 @@ public class WalletView extends Display {
 		return edge;
 	}
 
-	public void removeTransaction(SqlTransaction transaction) {
+	public void removeTransaction(GraphTransaction transaction) {
 		synchronized (viz) {
+			GraphWallet source;
 			if (transaction.inputs.get(0).isCoinBase()) {
-				return;
+				return; 
+				//source=GraphWallet.coinbaseWallet(transaction.node().getGraphDatabase());
 			}
-			System.out.println("Removing transaction");
-			long sourceKey = ((SqlTransactionInput) transaction.inputs.get(0))
-					.getAddress().getWalletId();
+			else{
+				source = transaction.inputs.get(0).address().wallet();
+			}
 			ArrayList<Long> targetKeys = new ArrayList<Long>();
 
-			for (TransactionOutput o : transaction.outputs) {
-				SqlTransactionOutput out = (SqlTransactionOutput) o;
-				long target = out.getAddress().getWalletId();
-				removeOutputEdge(sourceKey, target, o.getValue().longValue());
+			for (GraphTransactionOutput o : transaction.outputs) {
+	
+				GraphWallet target = o.address().wallet();
+				removeOutputEdge(source, target, o.getValue().longValue());
 			}
 
 		}
@@ -226,27 +242,29 @@ public class WalletView extends Display {
 
 	}
 
-	public void addTransaction(SqlTransaction transaction) {
+	public void addTransaction(GraphTransaction transaction) {
 		Node srcNode;
 		synchronized (viz) {
+			GraphWallet source;
 			if (transaction.inputs.get(0).isCoinBase()) {
+				// source = GraphWallet.coinbaseWallet(transaction.node().getGraphDatabase());
 				return;
 			}
-			System.out.println("Adding transaction");
-			long sourceKey = ((SqlTransactionInput) transaction.inputs.get(0))
-					.getAddress().getWalletId();
+			else{
+				source = transaction.inputs.get(0).address().wallet();
+			}
 			ArrayList<Long> targetKeys = new ArrayList<Long>();
 		
-			srcNode = findOrCreateWalletNode(sourceKey);
-			for (TransactionOutput o : transaction.outputs) {
-				SqlTransactionOutput out = (SqlTransactionOutput) o;
-				long target = out.getAddress().getWalletId();
+			srcNode = findOrCreateWalletNode(source);
+			for (GraphTransactionOutput o : transaction.outputs) {
+				GraphWallet target = o.address().wallet();
 				findOrCreateWalletNode(target);
-				addOutputEdge(sourceKey, target, o.getValue().longValue());
-				highlightNodes(sourceKey,target);
+				addOutputEdge(source, target, o.getValue().longValue());
+				highlightNodes(source,target);
 			}
 
 		}
+		viz.run("layout");
 		viz.run("color");
 	}
 	
@@ -264,8 +282,8 @@ public class WalletView extends Display {
 	
 	}
 	
-	public void panToAddress(SqlAddress a){
-		panToNodeId(a.getWalletId());
+	public void panToAddress(GraphAddress a){
+		panToNodeId(a.wallet().node().getId());
 	}
 
 	public void clearHighlights() {
@@ -285,12 +303,13 @@ public class WalletView extends Display {
 		viz.getVisualItem("graph", t).setHighlighted(true);
 	}
 
-	public void highlightNodes(long source, long target) {
-		Node sourceNode = graph.getNodeFromKey(source);
-		Node targetNode = graph.getNodeFromKey(target);
+	public void highlightNodes(GraphWallet source, GraphWallet target) {
+		Node sourceNode = graph.getNodeFromKey(source.node().getId());
+		Node targetNode = graph.getNodeFromKey(target.node().getId());
 		if (targetNode == null || sourceNode == null) {
 			viz.run("color");
 			return;
+			
 		}
 		System.out.println("setting highlight");
 		highlightTuple(sourceNode);

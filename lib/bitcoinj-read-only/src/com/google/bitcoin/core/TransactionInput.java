@@ -30,7 +30,7 @@ import java.util.Map;
 public class TransactionInput extends Message implements Serializable {
     private static final long serialVersionUID = 2;
     public static final byte[] EMPTY_ARRAY = new byte[0];
-
+    public Boolean coinbase=null;
     // Allows for altering transactions after they were broadcast. Tx replacement is currently disabled in the C++
     // client so this is always the UINT_MAX.
     // TODO: Document this in more detail and build features that use it.
@@ -55,6 +55,15 @@ public class TransactionInput extends Message implements Serializable {
         this.sequence = 0xFFFFFFFFL;
         this.parentTransaction = parentTransaction;
     }
+    
+    TransactionInput(NetworkParameters params){
+    	super(params);
+    	this.scriptBytes = null;
+        this.outpoint = new TransactionOutPoint(params, -1, null);
+        this.sequence = 0xFFFFFFFFL;
+        this.parentTransaction = null;
+    }
+    
 
     /** Creates an UNSIGNED input that links to the given output */
     TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
@@ -101,9 +110,15 @@ public class TransactionInput extends Message implements Serializable {
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {
+    	if(coinbase!=null){
+    		return coinbase;
+    	}
         for (int i = 0; i < outpoint.hash.length; i++)
-            if (outpoint.hash[i] != 0) return false;
-        return true;
+            if (outpoint.hash[i] != 0) coinbase=false;
+        if(coinbase==null){
+        	coinbase=true;
+        }
+        return coinbase;
     }
 
     /**

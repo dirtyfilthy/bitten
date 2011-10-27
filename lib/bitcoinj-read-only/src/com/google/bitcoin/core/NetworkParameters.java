@@ -30,7 +30,7 @@ import java.math.BigInteger;
  */
 public class NetworkParameters implements Serializable {
     private static final long serialVersionUID = 3L;
-
+    private static NetworkParameters prod;
     /**
      * The protocol version this library implements. A value of 31800 means 0.3.18.00.
      */
@@ -123,7 +123,10 @@ public class NetworkParameters implements Serializable {
 
     /** The primary BitCoin chain created by Satoshi. */
     public static NetworkParameters prodNet() {
-        NetworkParameters n = new NetworkParameters();
+        if(prod!=null){
+        	return prod;
+        }
+    	NetworkParameters n = new NetworkParameters();
         n.proofOfWorkLimit = new BigInteger("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         n.port = 8333;
         n.packetMagic = 0xf9beb4d9L;
@@ -137,6 +140,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setNonce(2083236893);
         String genesisHash = n.genesisBlock.getHashAsString();
         assert genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f") : genesisHash;
+        prod=n;
         return n;
     }
 
