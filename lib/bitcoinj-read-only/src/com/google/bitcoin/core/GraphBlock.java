@@ -37,13 +37,13 @@ public class GraphBlock extends StoredBlock implements Nodeable, GraphSaveable {
 		node.setProperty("version", header.getVersion());
 		node.setProperty("prevBlockHash", header.getPrevBlockHash());
 		node.setProperty("merkleRoot", header.getMerkleRoot());
-		node.setProperty("time", header.getTime());
+		node.setProperty("time", (int) header.getTime());
 		node.setProperty("difficultyTarget",header.getDifficultyTarget());
 		node.setProperty("nonce",header.getNonce());
 		blockIndex.add(node, "hash", header.getHashAsString());
 		blockIndex.add(node, "height", height);
 		for(GraphTransaction t : header.transactions){
-			t.createdAt=header.getTime();
+			t.createdAt=(int) header.getTime();
 			t.coinbaseValue=getSubsidy();
 			t.save(graph);
 			Relationship r=node.createRelationshipTo(t.node(), GraphRelationships.HAS_TRANSACTION);
@@ -74,7 +74,7 @@ public class GraphBlock extends StoredBlock implements Nodeable, GraphSaveable {
 		header.setVersion( (Long) node.getProperty("version"));
 		header.setPrevBlockHash((byte[]) node.getProperty("prevBlockHash"));
 		header.setMerkleRoot((byte[]) node.getProperty("merkleRoot"));
-		header.setTime( (Long) node.getProperty("time"));
+		header.setTime( (Integer) node.getProperty("time"));
 		header.setDifficultyTarget((Long) node.getProperty("difficultyTarget"));
 		header.setNonce((Long) node.getProperty("nonce"));
 	}

@@ -12,7 +12,7 @@ public class GraphTransactionOutput extends TransactionOutput implements
 	
 	private GraphTransaction transaction;
 	private Node node;
-	public long index;
+	public int index;
 
 	GraphTransactionOutput(NetworkParameters params, byte[] scriptBytes) {
 		super(params, scriptBytes);
@@ -36,8 +36,13 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		node=n;
 		transaction=null;
 		value=BigInteger.valueOf((Long) node.getProperty("value"));
-		// lazy load script bytes in getScriptBytes() 
-		index=(Long) node.getProperty("index");
+		// lazy load script bytes in getScriptBytes()
+		if(node.hasProperty("index")){
+			index=(Integer) node.getProperty("index");
+		}
+		else{
+			index=0;
+		}
 	}
 	
 	
@@ -83,7 +88,9 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		}
 		node.setProperty("value",value.longValue());
 		// node.setProperty("scriptBytes",scriptBytes);
-		node.setProperty("index",index);
+		if(this.index!=0){
+			node.setProperty("index",this.index);
+		}
 		try {
 			GraphAddress a=GraphAddress.findOrCreateAddress(graph, params, getToAddress().toString());
 			node.createRelationshipTo(a.node(), GraphRelationships.TO_ADDRESS);
@@ -104,7 +111,7 @@ public class GraphTransactionOutput extends TransactionOutput implements
 	}
 
 	@Override
-	public Long index() {
+	public Integer index() {
 		// TODO Auto-generated method stub
 		return index;
 	}

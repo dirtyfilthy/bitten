@@ -18,10 +18,10 @@ import org.neo4j.graphdb.index.IndexManager;
 public class GraphTransaction extends Transaction implements GraphSaveable,
 		Nodeable, Timeable {
 
-	
+	private static MapCache<String, Node> cache=new MapCache<String,Node>(2000);
 	private Node node;
-	public long createdAt;
-	public long index;
+	public int createdAt;
+	public int index;
 	public BigInteger coinbaseValue;
 	public ArrayList<GraphTransactionInput> inputs;
 	public ArrayList<GraphTransactionOutput> outputs;
@@ -45,9 +45,21 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 	public GraphTransaction(NetworkParameters params, Node n){
 		super(params);
 		this.node=n;
-		this.version=(Long) node.getProperty("version");
-		this.lockTime=(Long) node.getProperty("lockTime");
-		this.createdAt=(Long) node.getProperty("createdAt");
+		/// this.version=(Long) node.getProperty("version");
+		/// this.lockTime=(Long) node.getProperty("lockTime");
+		this.createdAt=(Integer) node.getProperty("createdAt");
+		
+	}
+	
+	public static Node findTransactionNode(GraphDatabaseService graph, String hash){
+		if(cache.containsKey(hash)){
+			return cache.get(hash);
+		}
+		IndexManager index=graph.index();
+		Index<Node> transactionIndex=index.forNodes("transactions");
+		Node n=transactionIndex.get("hash", hash).getSingle();
+		cache.put(hash, n);
+		return n;
 		
 	}
 	
@@ -115,7 +127,7 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		
 		*/
 		
-		this.createdAt=(Long) node.getProperty("time");
+		this.createdAt=(Integer) node.getProperty("time");
 		
 		
 		inputs=new ArrayList<GraphTransactionInput>();
@@ -153,7 +165,9 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		// node.setProperty("lockTime", this.lockTime);
 		node.setProperty("time", this.createdAt);
 		node.setProperty("hash", this.getHash().hash);
-		node.setProperty("index", this.index);
+		if(this.index!=0){
+			node.setProperty("index", this.index);
+		}
 		IndexManager index=graph.index();
 		Index<Node> transactionsIndex=index.forNodes("transactions");
 		transactionsIndex.remove(node);
@@ -161,10 +175,10 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		int i=0;
 		for(GraphTransactionInput in : inputs){
 			in.coinbaseValue=coinbaseValue;
-			in.index=Long.valueOf(i);
+			in.index=i;
 			in.save(graph);
 			Relationship r=node.createRelationshipTo(in.node(), GraphRelationships.TRANSACTION_INPUT);
-			r.setProperty("index", in.index);
+			// r.setProperty("index", in.index);
 			i++;
 		}
 		i=0;
@@ -172,7 +186,6 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 			out.index=i;
 			out.save(graph);
 			Relationship r=node.createRelationshipTo(out.node(), GraphRelationships.TRANSACTION_OUTPUT);
-			r.setProperty("index", out.index);
 			i++;
 		}
 	}
@@ -193,7 +206,7 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
         // First come the inputs.
         long numInputs = readVarInt();
         inputs = new ArrayList<GraphTransactionInput>((int)numInputs);
-        for (long i = 0; i < numInputs; i++) {
+        for (int i = 0; i < numInputs; i++) {
             GraphTransactionInput input = new GraphTransactionInput(params, this, bytes, cursor);
             input.index=i;
             inputs.add(input);
@@ -202,7 +215,7 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
         // Now the outputs
         long numOutputs = readVarInt();
         outputs = new ArrayList<GraphTransactionOutput>((int)numOutputs);
-        for (long i = 0; i < numOutputs; i++) {
+        for (int i = 0; i < numOutputs; i++) {
             GraphTransactionOutput output = new GraphTransactionOutput(params, this, bytes, cursor);
             output.index=i;
             outputs.add(output);
@@ -221,7 +234,7 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 	@Override
 	public Date time() {
 		
-		return new Date(createdAt*1000);
+		return new Date((((long) createdAt) &  0xFFFFFFFFL)*1000L);
 	}
 	
 	public void save(){
