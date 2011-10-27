@@ -55,9 +55,9 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	}
 
 	public static GraphAddress findOrCreateAddress(GraphDatabaseService graph, NetworkParameters p, String base58hash) throws AddressFormatException{
-		//if(cache.containsKey(base58hash)){
-		//	return cache.get(base58hash);
-		//}
+		if(cache.containsKey(base58hash)){
+			return cache.get(base58hash);
+		}
 		IndexManager index=graph.index();
 		Index<Node> addressIndex=index.forNodes("addresses");
 		Node a=addressIndex.get("hash", base58hash).getSingle();
@@ -77,7 +77,7 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 				
 			}
 		}
-		// cache.put(base58hash, address);
+		cache.put(base58hash, address);
 		return address;
 	}
 	

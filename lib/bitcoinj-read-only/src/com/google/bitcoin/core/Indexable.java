@@ -10,7 +10,7 @@ public interface Indexable {
         }
 	};
 	
-	public Long index();
+	public Integer index();
 	
 	
 	

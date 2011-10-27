@@ -15,7 +15,7 @@ public class GraphTransactionInput extends TransactionInput implements
 	private Node node;
 	public BigInteger value;
 	public BigInteger coinbaseValue=BigInteger.ZERO;
-	public long index;
+	public int index;
 	private GraphTransaction transaction;
 
 	GraphTransactionInput(NetworkParameters params,
@@ -72,9 +72,14 @@ public class GraphTransactionInput extends TransactionInput implements
 		
 		value=BigInteger.valueOf((Long) node.getProperty("value"));
 		// sequence=(Long) node.getProperty("sequence"); #never use this
-		coinbase=(Boolean) node.getProperty("coinbase");
+		coinbase=(Boolean) node.hasProperty("coinbase");
 		// scriptBytes=(byte[]) node.getProperty("scriptBytes"); lazy load script bytes instead
-		index=(Long) node.getProperty("index");
+		if(node.hasProperty("index")){
+			index=(Integer) node.getProperty("index");
+		}
+		else{
+			index=0;
+		}
 		
 	}
 	
@@ -122,19 +127,24 @@ public class GraphTransactionInput extends TransactionInput implements
 			node=graph.createNode();
 		}
 		// node.setProperty("sequence", sequence);
-		node.setProperty("coinbase", isCoinBase());
+		if(isCoinBase()){
+			node.setProperty("coinbase", isCoinBase());
+		}
 		// node.setProperty("scriptBytes", scriptBytes);
 		
 		if(!isCoinBase()){
-			Node transactionNode=transactionIndex.get("hash", Utils.bytesToHexString(outpoint.hash)).getSingle();
+			Node transactionNode=GraphTransaction.findTransactionNode(graph, Utils.bytesToHexString(outpoint.hash));
 			if(transactionNode==null){
 				throw new RuntimeException("Can't find transaction when looking for outpoint");
 			}
 			Iterable<Relationship> i=transactionNode.getRelationships(Direction.OUTGOING, GraphRelationships.TRANSACTION_OUTPUT);
 			Node previousOutpoint = null;
+			int index_i=((int) (outpoint.index));
 			for(Relationship r : i){
-				if(((Long) r.getProperty("index")).equals(outpoint.index)){
-					previousOutpoint=r.getEndNode();
+				Node e=r.getEndNode();
+				boolean hasIndex=e.hasProperty("index");
+				if((index_i==0 && !hasIndex) || (index_i!=0 && hasIndex && e.getProperty("index").equals(index_i))){
+					previousOutpoint=e;
 					break;
 				}
 			}
@@ -152,11 +162,13 @@ public class GraphTransactionInput extends TransactionInput implements
 		else{
 			node.setProperty("value",coinbaseValue.longValue());
 		}
-		node.setProperty("index",this.index);
+		if(this.index!=0){
+			node.setProperty("index",this.index);
+		}
 	}
 
 	@Override
-	public Long index() {
+	public Integer index() {
 		// TODO Auto-generated method stub
 		return index;
 	}

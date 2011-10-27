@@ -120,7 +120,7 @@ public class TransactionTreeNode implements TreeTableNode {
 		case 0:
 			return "";
 		case 1:
-			return new Date(transaction.createdAt*1000);
+			return transaction.time();
 		case 2:
 			String label;
 			if(transaction.isCoinBase()){

@@ -83,6 +83,8 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 
 	@Override
 	public void save(GraphDatabaseService graph) {
+		org.neo4j.graphdb.Transaction tx = graph.beginTx();
+		try {
 		IndexManager index=graph.index();
 		Index<Node> walletIndex=index.forNodes("wallets");
 		if(node==null){
@@ -102,6 +104,11 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 		}
 		if(!notes.equals("")){
 			node.setProperty("notes",notes);
+		}
+		tx.success();
+		}
+		finally{
+			tx.finish();
 		}
 
 	}
@@ -237,7 +244,7 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 			r.delete();
 		}
 		walletIndex.remove(rhs.node());
-		node.setProperty("addresses",this.addressCount()+rhs.addressCount());
+		node.setProperty("addressCount",this.addressCount()+rhs.addressCount());
 		rhs.node().delete();
 		System.out.println("deleting "+rhs.node().getId());
 		
