@@ -5,27 +5,31 @@ import java.sql.SQLException;
 
 import javax.swing.JPanel;
 
-import com.google.bitcoin.core.SqlAddress;
-import com.google.bitcoin.core.SqlBlockStore;
+import com.google.bitcoin.core.AddressFormatException;
+import com.google.bitcoin.core.GraphAddress;
+import com.google.bitcoin.core.GraphBlockStore;
+
 
 public class AddressSearchResultPanel extends JPanel implements Closeable {
 
-	protected final static String SQL="SELECT DISTINCT transactions.*,blocks.time AS created_at FROM transaction_inputs JOIN transactions ON transaction_id=transactions.id JOIN blocks ON blocks.id=block_id WHERE from_address_id=? UNION SELECT DISTINCT transactions.*,blocks.time AS created_at FROM transaction_outputs JOIN transactions ON transaction_id=transactions.id JOIN blocks ON blocks.id=block_id WHERE to_address_id=?";
 	private TransactionResultPanel results;
+	private NoteEditorPanel editor;
 	
-	AddressSearchResultPanel(ControlPanel p, SqlBlockStore store,String address){
+	AddressSearchResultPanel(ControlPanel p, GraphBlockStore store,String address){
 		try {
-			SqlAddress a=store.findAddressByHash(address.trim());
-			PreparedStatement query=store.prepareStatement(SQL);
-			query.setLong(1, a.id);
-			query.setLong(2, a.id);
-			
-			results=new TransactionResultPanel(p, store, query);
+			GraphAddress a=store.findOrCreateAddress(address);
+			SearchAddressTask task=new SearchAddressTask(a);
+			editor=new NoteEditorPanel(a);
+			this.add(editor);
+			results=new TransactionResultPanel(p, task);
 			results.target=a;
 			results.setVisible(true);
 			this.add(results);
+			
+			
+			
 			results.execute();
-		} catch (SQLException e) {
+		} catch (AddressFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

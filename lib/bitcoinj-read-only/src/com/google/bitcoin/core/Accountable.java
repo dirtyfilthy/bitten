@@ -1,10 +1,11 @@
 package com.google.bitcoin.core;
 
+import java.math.BigInteger;
+
 public interface Accountable {
 	
-	long incomingAmount(SqlTransaction t);
+	BigInteger incomingAmount(GraphTransaction t);
 	
-	long outgoingAmount(SqlTransaction t);
-	
+	BigInteger outgoingAmount(GraphTransaction t);
 
 }

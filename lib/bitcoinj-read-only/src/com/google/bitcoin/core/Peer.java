@@ -87,8 +87,8 @@ public class Peer {
                 Message m = conn.readMessage();
                 if (m instanceof InventoryMessage) {
                     processInv((InventoryMessage) m);
-                } else if (m instanceof Block) {
-                    processBlock((Block) m);
+                } else if (m instanceof GraphBlockHeader) {
+                    processBlock((GraphBlockHeader) m);
                 } else if (m  instanceof AddressMessage) {
                     // We don't care about addresses of the network right now. But in future,
                     // we should save them in the wallet so we don't put too much load on the seed nodes and can
@@ -112,7 +112,7 @@ public class Peer {
         }
     }
 
-    private void processBlock(Block m) throws IOException {
+    private void processBlock(GraphBlockHeader m) throws IOException {
     	log.info("Processing block");
         assert Thread.currentThread() == thread;
         try {

@@ -67,7 +67,7 @@ public class BlockChain {
 
     // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
     // were downloading the block chain.
-    private final ArrayList<Block> unconnectedBlocks = new ArrayList<Block>();
+    private final ArrayList<GraphBlockHeader> unconnectedBlocks = new ArrayList<GraphBlockHeader>();
 
     /**
      * Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
@@ -99,7 +99,7 @@ public class BlockChain {
      * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
      * If the block can be connected to the chain, returns true.
      */
-    public synchronized boolean add(Block block) throws VerificationException, ScriptException {
+    public synchronized boolean add(GraphBlockHeader block) throws VerificationException, ScriptException {
         try {
             return add(block, true);
         } catch (BlockStoreException e) {
@@ -112,7 +112,7 @@ public class BlockChain {
     private long statsLastTime = System.currentTimeMillis();
     private long statsBlocksAdded;
 
-    private synchronized boolean add(Block block, boolean tryConnecting)
+    private synchronized boolean add(GraphBlockHeader block, boolean tryConnecting)
             throws BlockStoreException, VerificationException, ScriptException {
         if (System.currentTimeMillis() - statsLastTime > 1000) {
             // More than a second passed since last stats logging.
@@ -136,7 +136,7 @@ public class BlockChain {
         }
 
         // Try linking it to a place in the currently known blocks.
-        StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
+        GraphBlock storedPrev = blockStore.get(block.getPrevBlockHash());
 
         if (storedPrev == null) {
             // We can't find the previous block. Probably we are still in the process of downloading the chain and a
@@ -150,7 +150,7 @@ public class BlockChain {
             //
             // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
             // out of scope we will reclaim the used memory.
-            StoredBlock newStoredBlock = storedPrev.build(block);
+            GraphBlock newStoredBlock = storedPrev.build(block);
             checkDifficultyTransitions(storedPrev, newStoredBlock);
             blockStore.put(newStoredBlock);
             for(BlockChainListener b : blockChainListeners){
@@ -169,7 +169,7 @@ public class BlockChain {
         return true;
     }
 
-    private void connectBlock(StoredBlock newStoredBlock, StoredBlock storedPrev, List<Transaction> newTransactions)
+    private void connectBlock(GraphBlock newStoredBlock, GraphBlock storedPrev, List<GraphTransaction> newTransactions)
             throws BlockStoreException, VerificationException {
         if (storedPrev.equals(chainHead)) {
             // This block connects to the best known block, it is a normal continuation of the system.
@@ -196,7 +196,7 @@ public class BlockChain {
             // We may not have any transactions if we received only a header. That never happens today but will in
             // future when getheaders is used as an optimization.
             if (newTransactions != null) {
-                sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, newTransactions);
+               //  sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, newTransactions);
             }
 
             if (haveNewBestChain)
@@ -207,7 +207,7 @@ public class BlockChain {
     /**
      * Called as part of connecting a block when the new block results in a different chain having higher total work.
      */
-    private void handleNewBestChain(StoredBlock newChainHead) throws BlockStoreException, VerificationException {
+    private void handleNewBestChain(GraphBlock newChainHead) throws BlockStoreException, VerificationException {
         // This chain has overtaken the one we currently believe is best. Reorganize is required.
         //
         // Firstly, calculate the block at which the chain diverged. We only need to examine the
@@ -288,7 +288,7 @@ public class BlockChain {
         }
     }
 
-    private void setChainHead(StoredBlock chainHead) {
+    private void setChainHead(GraphBlock chainHead) {
         this.chainHead = chainHead;
         try {
             blockStore.setChainHead(chainHead);
@@ -307,9 +307,9 @@ public class BlockChain {
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
-            Iterator<Block> iter = unconnectedBlocks.iterator();
+            Iterator<GraphBlockHeader> iter = unconnectedBlocks.iterator();
             while (iter.hasNext()) {
-                Block block = iter.next();
+                GraphBlockHeader block = iter.next();
                 // Look up the blocks previous.
                 StoredBlock prev = blockStore.get(block.getPrevBlockHash());
                 if (prev == null) {
@@ -348,7 +348,7 @@ public class BlockChain {
         // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
         // two weeks after the initial block chain download.
         long now = System.currentTimeMillis();
-        StoredBlock cursor = ((SqlBlockStore) blockStore).getByHeight(storedPrev.getHeight()-(params.interval-1));
+        StoredBlock cursor = ((GraphBlockStore) blockStore).getByHeight(storedPrev.getHeight()-(params.interval-1));
   
         log.info("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
 

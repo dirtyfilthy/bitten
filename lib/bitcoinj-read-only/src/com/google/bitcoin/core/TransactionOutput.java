@@ -31,11 +31,11 @@ import java.math.BigInteger;
 public class TransactionOutput extends Message implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
     private static final long serialVersionUID = -590332479859256824L;
-
+ 
     // A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
     // this output.
     public BigInteger value;
-    private byte[] scriptBytes;
+    protected byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
     private transient Script scriptPubKey;
@@ -71,6 +71,13 @@ public class TransactionOutput extends Message implements Serializable {
         super(params);
         this.scriptBytes = scriptBytes;
         this.value = Utils.toNanoCoins(50, 0);
+        availableForSpending = true;
+    }
+    
+    TransactionOutput(NetworkParameters params) {
+        super(params);
+        this.scriptBytes = null;
+        this.value = BigInteger.ZERO;
         availableForSpending = true;
     }
 
