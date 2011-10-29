@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 
-
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -17,7 +16,7 @@ import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexManager;
 
 public class GraphTransaction extends Transaction implements GraphSaveable,
-		Nodeable, Timeable,Transactable {
+		Nodeable, Timeable {
 
 	private static MapCache<String, Node> cache=new MapCache<String,Node>(2000);
 	private Node node;
@@ -241,31 +240,5 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 	public void save(){
 		save(node().getGraphDatabase());
 	}
-
-	@Override
-	public GraphTransaction transaction() {
-		// TODO Auto-generated method stub
-		return this;
-	}
-
-	@Override
-	public GraphWallet fromWallet() {
-		if(isCoinBase()){
-			return GraphWallet.coinbaseWallet(node().getGraphDatabase());
-		}
-		return inputs.get(0).address().wallet();
-	}
-
-	@Override
-	public ArrayList<GraphWallet> toWallets() {
-		ArrayList<GraphWallet> to=new ArrayList<GraphWallet>();
-		for(GraphTransactionOutput o : outputs){
-			GraphWallet w=o.address().wallet();
-			if(!to.contains(w))
-				to.add(w);
-		}
-		return to;
-	}
-
 
 }

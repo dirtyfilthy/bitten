@@ -242,9 +242,8 @@ public class Script {
     
     /**
      * Convenience wrapper around getPubKey. Only works for scriptSigs.
-     * @throws AddressFormatException 
      */
-    public Address getFromAddress() throws ScriptException, AddressFormatException {
+    public Address getFromAddress() throws ScriptException {
         return new Address(params, Utils.sha256hash160(getPubKey()));
     }
 
@@ -252,9 +251,8 @@ public class Script {
     /**
      * Gets the destination address from this script, if it's in the required form (see getPubKey).
      * @throws ScriptException
-     * @throws AddressFormatException 
      */
-    public Address getToAddress() throws ScriptException, AddressFormatException {
+    public Address getToAddress() throws ScriptException {
         return new Address(params, getPubKeyHash());
     }
     

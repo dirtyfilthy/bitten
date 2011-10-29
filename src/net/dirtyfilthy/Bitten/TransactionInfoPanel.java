@@ -18,15 +18,9 @@ public class TransactionInfoPanel extends JPanel {
 		BigInteger outgoingAmount=BigInteger.ZERO;
 		BigInteger unspent;
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		if(target.cachedTotalIncoming()!=null){
-			incomingAmount=target.cachedTotalIncoming();
-			outgoingAmount=target.cachedTotalOutgoing();
-		}
-		else{
-			for(GraphTransaction t : transactions){
-				incomingAmount=incomingAmount.add(target.incomingAmount(t));
-				outgoingAmount=outgoingAmount.add(target.outgoingAmount(t));
-			}
+		for(GraphTransaction t : transactions){
+			incomingAmount=incomingAmount.add(target.incomingAmount(t));
+			outgoingAmount=outgoingAmount.add(target.outgoingAmount(t));
 		}
 		unspent=incomingAmount.subtract(outgoingAmount);
 		this.add(new JLabel("Incoming amount: "+Utils.bitcoinValueToFriendlyString(incomingAmount)));

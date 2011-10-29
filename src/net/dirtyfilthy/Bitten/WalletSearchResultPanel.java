@@ -11,13 +11,13 @@ import com.google.bitcoin.core.GraphWallet;
 
 public class WalletSearchResultPanel extends JPanel implements Closeable {
 
-	private PaymentResultPanel results;
+	private TransactionResultPanel results;
 	private NoteEditorPanel editor;
 	
 	WalletSearchResultPanel(ControlPanel p, GraphWallet w){
 		editor=new NoteEditorPanel(w);
 		this.add(editor);
-		results=new PaymentResultPanel(p, new SearchWalletTask(w));
+		results=new TransactionResultPanel(p, new SearchWalletTask(w));
 		results.target=w;
 		results.setVisible(true);
 		this.add(results);

@@ -25,8 +25,8 @@ public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 	
 
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-		if((value instanceof TransactableTreeNode) && (value != null) && (target!=null)) {
-			TransactableTreeNode t=(TransactableTreeNode) value;
+		if((value instanceof TransactionTreeNode) && (value != null) && (target!=null)) {
+			TransactionTreeNode t=(TransactionTreeNode) value;
 			if(t.icon==null){
 				URL img;
 				if(t.transaction.isCoinBase()){

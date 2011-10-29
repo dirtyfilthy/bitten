@@ -9,25 +9,24 @@ import javax.swing.tree.TreeNode;
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
 import com.google.bitcoin.core.GraphTransaction;
-import com.google.bitcoin.core.Transactable;
 
-public class RootTransactableTreeNode implements TreeTableNode {
+public class RootTransactionTreeNode implements TreeTableNode {
 
-	public  ArrayList<Transactable> list;
+	public  ArrayList<GraphTransaction> list;
 	private ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
-	private HashMap<Transactable,TransactableTreeNode> transactableMap;
-	RootTransactableTreeNode(ControlPanel p, ArrayList<Transactable> list){
+	private HashMap<GraphTransaction,TransactionTreeNode> transactionMap;
+	RootTransactionTreeNode(ControlPanel p, ArrayList<GraphTransaction> list){
 		this.list=list;
-		transactableMap=new HashMap<Transactable,TransactableTreeNode>();
-		for(Transactable t : list){
-			TransactableTreeNode n=new TransactableTreeNode(this,p,t);
-			transactableMap.put(t, n);
+		transactionMap=new HashMap<GraphTransaction,TransactionTreeNode>();
+		for(GraphTransaction t : list){
+			TransactionTreeNode n=new TransactionTreeNode(this,p,t);
+			transactionMap.put(t, n);
 			children.add(n);
 		}
 	}
 	
-	public TransactableTreeNode findNodeByTransactabt(Transactable t){
-		return transactableMap.get(t);
+	public TransactionTreeNode findNodeBySqlTransaction(GraphTransaction t){
+		return transactionMap.get(t);
 	}
 	
 	@Override
