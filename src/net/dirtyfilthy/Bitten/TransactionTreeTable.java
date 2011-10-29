@@ -69,8 +69,8 @@ public class TransactionTreeTable extends JXTreeTable {
 		            	}
 		            	
 		            }
-		            else if(c instanceof TransactionTreeNode){
-		            	TransactionTreeNode node=(TransactionTreeNode) c;
+		            else if(c instanceof TransactableTreeNode){
+		            	TransactableTreeNode node=(TransactableTreeNode) c;
 		            	if(column==4){
 		            		GraphTransactionOutput o=node.transaction.outputs.get(0);
 		     
@@ -99,7 +99,7 @@ public class TransactionTreeTable extends JXTreeTable {
 				Object obj=e.getPath().getLastPathComponent();
 				if(obj instanceof TransactionRowTreeNode){
 			    	TransactionRowTreeNode n=(TransactionRowTreeNode) obj;
-			    	GraphTransactionInput input=((TransactionTreeNode) n.getParent()).transaction.inputs.get(0);
+			    	GraphTransactionInput input=((TransactableTreeNode) n.getParent()).transaction.inputs.get(0);
 			    	if(input.isCoinBase() || n.output==null){
 			    		return;
 			    	}
@@ -109,8 +109,8 @@ public class TransactionTreeTable extends JXTreeTable {
 			    	panel.getView().clearHighlights();
 			    	//panel.getView().highlightNodes(source,target);
 			    }
-				else if(obj instanceof TransactionTreeNode){
-			    	TransactionTreeNode n=(TransactionTreeNode) obj;
+				else if(obj instanceof TransactableTreeNode){
+			    	TransactableTreeNode n=(TransactableTreeNode) obj;
 			    	
 			    	
 			    	GraphTransactionInput in= n.transaction.inputs.get(0);

@@ -151,8 +151,9 @@ public class TransactionOutput extends Message implements Serializable {
     /**
      * Convenience method that returns the to address of this input by parsing the scriptSig.
      * @throws ScriptException if the scriptPub could not be understood (eg, if this is a coinbase transaction).
+     * @throws AddressFormatException 
      */
-    public Address getToAddress() throws ScriptException {
+    public Address getToAddress() throws ScriptException, AddressFormatException {
         return getScriptPubKey().getToAddress();
     }
     
@@ -178,8 +179,12 @@ public class TransactionOutput extends Message implements Serializable {
     /** Returns a human readable debug string. */
     public String toString() {
         try {
-            return "TxOut of " + Utils.bitcoinValueToFriendlyString(value) + " to " + getScriptPubKey().getToAddress()
-                    .toString() + " script:" + getScriptPubKey().toString();
+            try {
+				return "TxOut of " + Utils.bitcoinValueToFriendlyString(value) + " to " + getScriptPubKey().getToAddress()
+				        .toString() + " script:" + getScriptPubKey().toString();
+			} catch (AddressFormatException e) {
+				return "";
+			}
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }

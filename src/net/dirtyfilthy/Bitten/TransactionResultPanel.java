@@ -39,9 +39,9 @@ public class TransactionResultPanel extends ResultSetPanel implements Closeable 
 
 	
 	@Override
-	protected void processResultSet(ArrayList<GraphTransaction> transactions) {
+	protected void processResultSet(ArrayList t) {
 		System.out.println("process transactions");
-	
+			transactions=(ArrayList<GraphTransaction>) t;
 			
 			String columns[]={"id","time","from","btc","to","btc","V"};
 			

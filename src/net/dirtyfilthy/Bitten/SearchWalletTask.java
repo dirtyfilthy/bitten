@@ -6,10 +6,11 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
 
 import com.google.bitcoin.core.GraphAddress;
+import com.google.bitcoin.core.GraphPayment;
 import com.google.bitcoin.core.GraphTransaction;
 import com.google.bitcoin.core.GraphWallet;
 
-public class SearchWalletTask extends SwingWorker<ArrayList<GraphTransaction>, Object> {
+public class SearchWalletTask extends SwingWorker<ArrayList<GraphPayment>, Object> {
 	
 	private GraphWallet wallet;
 	
@@ -18,8 +19,8 @@ public class SearchWalletTask extends SwingWorker<ArrayList<GraphTransaction>, O
 	}
 	
 	@Override
-	protected ArrayList<GraphTransaction> doInBackground() throws Exception {
-		return wallet.transactions();
+	protected ArrayList<GraphPayment> doInBackground() throws Exception {
+		return wallet.payments();
 	}
 	
 

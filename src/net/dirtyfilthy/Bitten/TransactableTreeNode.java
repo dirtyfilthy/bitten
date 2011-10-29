@@ -17,13 +17,14 @@ import com.google.bitcoin.core.GraphTransaction;
 import com.google.bitcoin.core.GraphTransactionInput;
 import com.google.bitcoin.core.GraphTransactionOutput;
 import com.google.bitcoin.core.GraphWallet;
+import com.google.bitcoin.core.Transactable;
 
 import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Utils;
 
-public class TransactionTreeNode implements TreeTableNode {
-	public GraphTransaction transaction;
+public class TransactableTreeNode implements TreeTableNode {
+	private Transactable transactable;
 	public boolean visible=false;
 	private ControlPanel panel;
 	public Icon icon;
@@ -31,26 +32,33 @@ public class TransactionTreeNode implements TreeTableNode {
 	String outgoingAmount;
 	ArrayList<TreeTableNode> children=new ArrayList<TreeTableNode>();
 	TreeTableNode parent;
-	TransactionTreeNode(TreeTableNode parent, ControlPanel p, GraphTransaction t){
-		transaction=t;
+	boolean expanded=false;
+	TransactableTreeNode(TreeTableNode parent, ControlPanel p, Transactable t){
+		transactable=t;
 		panel=p;
 		this.parent=parent;
-		ArrayList<GraphTransactionInput> inputs=transaction.inputs;
-		ArrayList<GraphTransactionOutput> outputs=transaction.outputs;
-		int size=inputs.size() > outputs.size() ? inputs.size() : outputs.size();
-		int c=0;
 		
+	}
+	
+	public void expand(){
+		if(expanded){
+			return;
+		}
+		GraphTransaction t=transactable.transaction();
+		int size=t.inputs.size() > t.outputs.size() ? t.inputs.size() : t.outputs.size();
+		int c=0;
 		GraphTransactionInput i;
 		GraphTransactionOutput o;
 		while(c<size){
 			TransactionRowTreeNode n=new TransactionRowTreeNode(this);
+			
 			i=null;
 			o=null;
-			if(c<inputs.size()){
-				i= inputs.get(c);
+			if(c<t.inputs.size()){
+				i= t.inputs.get(c);
 			}
-			if(c<outputs.size()){
-				o=outputs.get(c);
+			if(c<t.outputs.size()){
+				o=t.outputs.get(c);
 			}
 			n.input=i;
 			n.output=o;
@@ -59,6 +67,8 @@ public class TransactionTreeNode implements TreeTableNode {
 		}
 		
 	}
+	
+	
 	
 	@Override
 	public boolean getAllowsChildren() {

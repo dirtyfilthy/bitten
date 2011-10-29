@@ -77,7 +77,13 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		if(r==null){
 			return null;
 		}
-		return new GraphAddress(r.getEndNode());
+		try {
+			return new GraphAddress(r.getEndNode());
+		} catch (AddressFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 }
 	
 
@@ -93,7 +99,9 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		}
 		try {
 			GraphAddress a=GraphAddress.findOrCreateAddress(graph, params, getToAddress().toString());
-			node.createRelationshipTo(a.node(), GraphRelationships.TO_ADDRESS);
+			if(a!=null){
+				node.createRelationshipTo(a.node(), GraphRelationships.TO_ADDRESS);
+			}
 		} catch (AddressFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

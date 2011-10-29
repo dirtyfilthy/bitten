@@ -56,7 +56,7 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		System.out.println("type "+arg0.getType());
 	}
 
-	public void notifyVisibilityChange(TransactionTreeNode transactionTreeNode) {
+	public void notifyVisibilityChange(TransactableTreeNode transactionTreeNode) {
 		visibilityManager.setTransactionVisibility(transactionTreeNode.transaction, transactionTreeNode.visible);
 		
 	} 

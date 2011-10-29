@@ -88,7 +88,14 @@ public class GraphTransactionInput extends TransactionInput implements
 			if(r==null){
 				return null;
 			}
-			return new GraphAddress(r.getEndNode());
+			try {
+				GraphAddress a=new GraphAddress(r.getEndNode());
+				return a;
+			} catch (AddressFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
 	}
 	
 	
