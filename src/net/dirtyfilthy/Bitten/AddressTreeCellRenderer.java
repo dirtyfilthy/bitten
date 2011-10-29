@@ -33,7 +33,7 @@ public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 					img=this.getClass().getResource("/icons/coinbase.png");
 				}
 				else{
-					if(target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>0){
+					if(((t.transaction.cachedIsIncoming==null && target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>0)) || (t.transaction.cachedIsIncoming!=null && t.transaction.cachedIsIncoming) ){
 						img=this.getClass().getResource("/icons/incoming.png");
 					}
 					else{
