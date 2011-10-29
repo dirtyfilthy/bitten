@@ -20,7 +20,7 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	private static MapCache<String,GraphAddress> cache=new MapCache<String,GraphAddress>(2000);
 	
 	
-	public GraphAddress(NetworkParameters params, byte[] hash160) {
+	public GraphAddress(NetworkParameters params, byte[] hash160) throws AddressFormatException {
 		super(params, hash160);
 		// TODO Auto-generated constructor stub
 	}
@@ -32,7 +32,7 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	}
 	
 
-	public GraphAddress(Node a) {
+	public GraphAddress(Node a) throws AddressFormatException {
 		super(NetworkParameters.prodNet(),(byte[]) a.getProperty("hash"));
 		node=a;
 		label="";
@@ -41,7 +41,7 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 			label=(String) a.getProperty("label");
 		}
 		if(node.hasProperty("notes")){
-			label=(String) a.getProperty("notes");
+			notes=(String) a.getProperty("notes");
 		}
 		
 			
@@ -150,9 +150,11 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 			}
 			if(!label.equals("")){
 				node.setProperty("label",label);
+				System.out.println("setting label "+label);
 				addressIndex.add(node, "label", label);
 			}
 			if(!notes.equals("")){
+				System.out.println("setting notes "+notes);
 				node.setProperty("notes",notes);
 			}
 		
@@ -212,6 +214,18 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	
 	public void save(){
 		save(node().getGraphDatabase());
+	}
+
+	@Override
+	public BigInteger cachedTotalIncoming() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BigInteger cachedTotalOutgoing() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

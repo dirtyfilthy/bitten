@@ -18,13 +18,13 @@ public abstract class ResultSetPanel extends JPanel implements PropertyChangeLis
 	
 	protected PreparedStatement query;
 	protected JProgressBar progress;
-	protected SwingWorker<ArrayList<GraphTransaction>, Object> task;
+	protected SwingWorker task;
 	
 	ResultSetPanel(){
 		
 	}
 	
-	ResultSetPanel(SwingWorker<ArrayList<GraphTransaction>, Object> task){
+	ResultSetPanel(SwingWorker task){
 		this.task=task;	
 	}
 
@@ -54,6 +54,6 @@ public abstract class ResultSetPanel extends JPanel implements PropertyChangeLis
 		task.execute();
 	}
 	
-	protected abstract void processResultSet(ArrayList<GraphTransaction> arrayList);
+	protected abstract void processResultSet(ArrayList arrayList);
 
 }

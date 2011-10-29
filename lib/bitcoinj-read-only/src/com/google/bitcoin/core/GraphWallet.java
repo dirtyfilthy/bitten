@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -30,6 +32,10 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 	private Node node;
 	public String notes="";
 	public String label="";
+
+	public BigInteger cachedTotalIncoming;
+
+	public BigInteger cachedTotalOutgoing;
 	private static GraphWallet coinbaseWallet;
 	
 	public GraphWallet(){
@@ -131,7 +137,12 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 			     GraphRelationships.HAS_ADDRESS, Direction.OUTGOING ).getAllNodes();
 		
 		for(Node n : nodeList){
-			list.add(new GraphAddress(n));
+			try {
+				list.add(new GraphAddress(n));
+			} catch (AddressFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		Collections.sort(list,Nodeable.NODE_ORDER);
 		return list;
@@ -261,18 +272,43 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 		return t.outgoingAmountForWallet(this);
 	}
 	
+	public  ArrayList<GraphPayment> payments(){;
+		long incoming=0;
+		long outgoing=0;
+		
+		ArrayList<GraphPayment> list=new ArrayList<GraphPayment>();
+		for(Relationship r : node.getRelationships(Direction.BOTH, GraphRelationships.PAYMENT)){
+			GraphPayment p=new GraphPayment(r);
+			if(!p.isSelfPayment()){
+				if(this.node().equals(r.getStartNode())){
+					outgoing+=p.value();
+				}
+				else{
+					incoming+=p.value();
+				}
+			}
+			list.add(p);
+		}
+		Collections.sort(list, Timeable.TIME_ORDER);
+		this.cachedTotalIncoming=BigInteger.valueOf(incoming);
+		this.cachedTotalOutgoing=BigInteger.valueOf(outgoing);
+		return list;
+	}
+	
 	public ArrayList<GraphTransaction> transactions() {
 		ArrayList<GraphTransaction> list=new ArrayList<GraphTransaction>();
 		HashMap<Node,Boolean> contains=new HashMap<Node,Boolean>();
-		for(Relationship r : node.getRelationships(Direction.BOTH, GraphRelationships.PAYMENT)){
-			Node n=node().getGraphDatabase().getNodeById((Long) r.getProperty("transaction_id"));
-			GraphTransaction t=new GraphTransaction(n);
-			if(!contains.containsKey(t.node())){
+		long incoming=0;
+		long outgoing=0;
+		for(GraphPayment p : payments()){
+			GraphTransaction t=p.transaction();
+			if(!contains.containsKey(t)){
 				list.add(t);
 				contains.put(t.node(), true);
 			}
 		}
-		Collections.sort(list, Timeable.TIME_ORDER);
+		this.cachedTotalIncoming=BigInteger.valueOf(incoming);
+		this.cachedTotalOutgoing=BigInteger.valueOf(outgoing);
 		return list;
 		
 	}
@@ -310,6 +346,18 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 	
 	public void save(){
 		save(node().getGraphDatabase());
+	}
+
+	@Override
+	public BigInteger cachedTotalIncoming() {
+		// TODO Auto-generated method stub
+		return cachedTotalIncoming;
+	}
+
+	@Override
+	public BigInteger cachedTotalOutgoing() {
+		// TODO Auto-generated method stub
+		return cachedTotalOutgoing;
 	}
 		
 
