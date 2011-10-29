@@ -151,9 +151,8 @@ public class ECKey implements Serializable {
     /**
      * Returns the address that corresponds to the public part of this ECKey. Note that an address is derived from
      * the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
-     * @throws AddressFormatException 
      */
-    public Address toAddress(NetworkParameters params) throws AddressFormatException {
+    public Address toAddress(NetworkParameters params) {
         byte[] hash160 = Utils.sha256hash160(pub);
         return new Address(params, hash160);
     }
