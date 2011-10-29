@@ -27,6 +27,11 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
         }
 	};
 	
+	
+	public BigInteger cachedTotalIncoming;
+	
+	public BigInteger cachedTotalOutgoing;
+	
 	private Node node;
 	public String notes="";
 	public String label="";
@@ -264,14 +269,30 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 	public ArrayList<GraphTransaction> transactions() {
 		ArrayList<GraphTransaction> list=new ArrayList<GraphTransaction>();
 		HashMap<Node,Boolean> contains=new HashMap<Node,Boolean>();
+		long incoming=0;
+		long outgoing=0;
 		for(Relationship r : node.getRelationships(Direction.BOTH, GraphRelationships.PAYMENT)){
 			Node n=node().getGraphDatabase().getNodeById((Long) r.getProperty("transaction_id"));
 			GraphTransaction t=new GraphTransaction(n);
+			t.cachedIsIncoming=true;
+			if(!r.getStartNode().equals(r.getEndNode())){
+				long v=(Long) r.getProperty("value");
+				if(r.getStartNode().equals(node)){
+					outgoing+=v;
+					t.cachedIsIncoming=false;
+				}
+				else{
+					incoming+=v;
+				}
+			}
+			
 			if(!contains.containsKey(t.node())){
 				list.add(t);
 				contains.put(t.node(), true);
 			}
 		}
+		cachedTotalIncoming=BigInteger.valueOf(incoming);
+		cachedTotalOutgoing=BigInteger.valueOf(outgoing);
 		Collections.sort(list, Timeable.TIME_ORDER);
 		return list;
 		
@@ -310,6 +331,18 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 	
 	public void save(){
 		save(node().getGraphDatabase());
+	}
+
+	@Override
+	public BigInteger cachedTotalIncoming() {
+		
+		return cachedTotalIncoming;
+	}
+
+	@Override
+	public BigInteger cachedTotalOutgoing() {
+		// TODO Auto-generated method stub
+		return cachedTotalOutgoing;
 	}
 		
 

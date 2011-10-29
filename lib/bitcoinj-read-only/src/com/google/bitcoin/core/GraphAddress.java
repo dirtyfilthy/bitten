@@ -41,7 +41,7 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 			label=(String) a.getProperty("label");
 		}
 		if(node.hasProperty("notes")){
-			label=(String) a.getProperty("notes");
+			notes=(String) a.getProperty("notes");
 		}
 		
 			
@@ -212,6 +212,18 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	
 	public void save(){
 		save(node().getGraphDatabase());
+	}
+
+	@Override
+	public BigInteger cachedTotalIncoming() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BigInteger cachedTotalOutgoing() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

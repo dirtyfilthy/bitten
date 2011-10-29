@@ -25,6 +25,7 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 	public BigInteger coinbaseValue;
 	public ArrayList<GraphTransactionInput> inputs;
 	public ArrayList<GraphTransactionOutput> outputs;
+	public Boolean cachedIsIncoming=null;
 	public GraphTransaction(NetworkParameters params) {
 		super(params);
 		// TODO Auto-generated constructor stub
