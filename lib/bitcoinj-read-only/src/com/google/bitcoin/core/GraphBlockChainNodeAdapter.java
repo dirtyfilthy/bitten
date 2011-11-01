@@ -70,9 +70,6 @@ public class GraphBlockChainNodeAdapter implements Nodeable {
 	
 	public void add(GraphBlock graphBlock){
 		graphBlock.save(graph);
-		Relationship hasBlock=node.createRelationshipTo(graphBlock.node(),GraphRelationships.HAS_BLOCK);
-		hasBlock.setProperty("time",graphBlock.getHeader().getTime());
-		hasBlock.setProperty("height",graphBlock.getHeight());
 	}
 	
 	public GraphBlock get(byte[] hash){

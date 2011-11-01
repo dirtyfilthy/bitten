@@ -47,8 +47,11 @@ public class TransactionResultPanel extends ResultSetPanel implements Closeable 
 			
 			TransactionTreeTableModel  treeTableModel = new TransactionTreeTableModel( new RootTransactionTreeNode(panel, transactions), Arrays.asList(columns));
 			System.out.println("transactions "+transactions.size() );
-			info=new TransactionInfoPanel(target, transactions);
-			this.add(info);
+			if(target!=null){
+				info=new TransactionInfoPanel(target, transactions);
+			
+				this.add(info);
+			}
 			options=new TransactionOptionsPanel(panel,target, treeTableModel);
 			this.add(options);
 			table=new TransactionTreeTable(panel, treeTableModel);
@@ -62,6 +65,8 @@ public class TransactionResultPanel extends ResultSetPanel implements Closeable 
 			table.getModel().addTableModelListener(panel);
 			panel.registerTransactionTreeTable(table);
 			this.repaint();
+			options.processViz();
+			
 		
 		
 		

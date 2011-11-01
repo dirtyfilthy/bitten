@@ -8,6 +8,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
 import com.google.bitcoin.core.Accountable;
+import com.google.bitcoin.core.GraphTransaction;
 import com.google.bitcoin.core.WalletIdable;
 
 
@@ -32,8 +33,19 @@ public class TransactionOptionsPanel extends JPanel implements ItemListener {
 		this.add(visIncoming);
 		this.add(visOutgoing);
 		
+	}
+	
+	public void processViz(){
 		
-		
+		GraphTransaction t=model.transactions().get(0);
+		if(t!=null){
+			int incoming=t.incomingWallets;
+			int outgoing=t.outgoingWallets;
+			if((incoming+outgoing)<panel.autoViz()){
+				visIncoming.doClick();
+				visOutgoing.doClick();
+			}
+		}
 	}
 
 	@Override

@@ -43,55 +43,72 @@ public class TransactionTreeTable extends JXTreeTable {
 		final TransactionTreeTable t=this;
 		this.addMouseListener(new MouseAdapter()
 		{
-		
-		    public void mouseClicked(MouseEvent e)
-		    {
-		        if (e.getComponent().isEnabled() && e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2)
-		        {
-		            Point p = e.getPoint();
-		            int row = t.rowAtPoint(p); 
-		            int column = t.columnAtPoint(p);
-		            TreePath path=t.getPathForLocation(p.x, p.y);
-		            Object c=path.getLastPathComponent();
-		            if(c instanceof TransactionRowTreeNode){
-		            	TransactionRowTreeNode node=(TransactionRowTreeNode) c;
-		            	if(column==4){
-		            		
-		            		String address=node.output.address().toString();
-		            		System.out.println("address "+address);
-		            		panel.searchAddress(address);
-		            	}
-		            	else if(column==2 && !node.input.isCoinBase()){
-		            		
-		            		String address=node.input.address().toString();
-		            		System.out.println("address "+address);
-		            		panel.searchAddress(address);
-		            	}
-		            	
-		            }
-		            else if(c instanceof TransactionTreeNode){
-		            	TransactionTreeNode node=(TransactionTreeNode) c;
-		            	if(column==4){
-		            		GraphTransactionOutput o=node.transaction.outputs.get(0);
-		     
-		            		panel.showWallet(o.address().wallet());
-		           
-		            	}
-		            	if(column==2){
-		            		GraphTransactionInput o=node.transaction.inputs.get(0);
-		            		if(!node.transaction.isCoinBase()){
-		            			panel.showWallet(o.address().wallet());
-		            		}
-		           
-		            	}
-		            	
-		            }
-		        }
-		        
-		       
-		    }
-		    
-		});
+
+			public void mouseClicked(MouseEvent e)
+			{
+				if (e.getComponent().isEnabled() && e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2)
+				{
+					Point p = e.getPoint();
+					int row = t.rowAtPoint(p); 
+					int column = t.columnAtPoint(p);
+					TreePath path=t.getPathForLocation(p.x, p.y);
+					Object c=path.getLastPathComponent();
+					if(c instanceof TransactionRowTreeNode){
+						TransactionRowTreeNode node=(TransactionRowTreeNode) c;
+						if(column==4){
+
+							String address=node.output.address().toString();
+							System.out.println("address "+address);
+							panel.searchAddress(address);
+						}
+						else if(column==2 && !node.input.isCoinBase()){
+
+							String address=node.input.address().toString();
+							System.out.println("address "+address);
+							panel.searchAddress(address);
+						}
+
+					}
+					else if(c instanceof TransactionTreeNode){
+						TransactionTreeNode node=(TransactionTreeNode) c;
+						if(column==4){
+							GraphTransactionOutput o=node.transaction.outputs.get(0);
+
+							panel.showWallet(o.address().wallet());
+
+						}
+						if(column==2){
+							GraphTransactionInput o=node.transaction.inputs.get(0);
+							if(!node.transaction.isCoinBase()){
+								panel.showWallet(o.address().wallet());
+							}
+
+						}
+
+					}
+				}
+				if (e.getComponent().isEnabled() && e.getButton() == MouseEvent.BUTTON3){
+					Point p = e.getPoint();
+					TreePath path=t.getPathForLocation(p.x, p.y);
+					Object c=path.getLastPathComponent();
+					int row = t.rowAtPoint(p); 
+					int column = t.columnAtPoint(p);
+					if(c instanceof TransactionRowTreeNode){
+						TransactionRowTreeNode node=(TransactionRowTreeNode) c;
+						if(column==4){
+								OutputPopup pop=new OutputPopup(panel,node.output);
+								pop.show(e.getComponent(),e.getX(), e.getY());
+						}
+					}
+				}
+
+
+			}
+
+
+		}
+
+		);
 		this.addTreeSelectionListener(new TreeSelectionListener(){
 			
 			public void valueChanged(TreeSelectionEvent e){

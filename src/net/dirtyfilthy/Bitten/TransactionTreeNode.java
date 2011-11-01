@@ -129,6 +129,10 @@ public class TransactionTreeNode implements TreeTableNode {
 			}
 			else{
 				i=transaction.inputs.get(0).address();
+				System.out.println("addr "+i);
+				if(i==null){
+					return "NULL :(";
+				}
 				return i.wallet().label();
 			}
 		case 3:
@@ -151,8 +155,14 @@ public class TransactionTreeNode implements TreeTableNode {
 			}
 			else{
 				i=transaction.inputs.get(0).address();
-				iw=i.wallet();
-				l2=i.toString();
+				if(i==null){
+					iw=null;
+					l2="NULL ;(";
+				}
+				else{
+					iw=i.wallet();
+					l2=i.toString();
+				}
 			}
 			
 			for(GraphTransactionOutput out : transaction.outputs){
@@ -194,7 +204,10 @@ public class TransactionTreeNode implements TreeTableNode {
 			}
 			else{
 				i=transaction.inputs.get(0).address();
-				w=i.wallet();
+				w=null;
+				if(i!=null){
+					w=i.wallet();
+				}
 			}
 			for(GraphTransactionOutput out : transaction.outputs){
 				if(!out.address().wallet().equals(w)){

@@ -133,12 +133,13 @@ public class TransactionInput extends Message implements Serializable {
         }
         return scriptSig;
     }
-
+  
     /**
      * Convenience method that returns the from address of this input by parsing the scriptSig.
      * @throws ScriptException if the scriptSig could not be understood (eg, if this is a coinbase transaction).
+     * @throws AddressFormatException 
      */
-    public Address getFromAddress() throws ScriptException {
+    public Address getFromAddress() throws ScriptException, AddressFormatException {
         assert !isCoinBase();
         return getScriptSig().getFromAddress();
     }

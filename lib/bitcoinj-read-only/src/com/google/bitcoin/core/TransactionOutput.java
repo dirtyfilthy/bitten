@@ -147,12 +147,13 @@ public class TransactionOutput extends Message implements Serializable {
         availableForSpending = true;
         spentBy = null;
     }
-
+ 
     /**
      * Convenience method that returns the to address of this input by parsing the scriptSig.
      * @throws ScriptException if the scriptPub could not be understood (eg, if this is a coinbase transaction).
+     * @throws AddressFormatException 
      */
-    public Address getToAddress() throws ScriptException {
+    public Address getToAddress() throws ScriptException, AddressFormatException {
         return getScriptPubKey().getToAddress();
     }
     
@@ -172,9 +173,9 @@ public class TransactionOutput extends Message implements Serializable {
         } catch (ScriptException e) {
             log.error("Could not parse tx output script: {}", e.toString());
             return false;
-        }
+        } 
     }
-
+ 
     /** Returns a human readable debug string. */
     public String toString() {
         try {
@@ -182,7 +183,11 @@ public class TransactionOutput extends Message implements Serializable {
                     .toString() + " script:" + getScriptPubKey().toString();
         } catch (ScriptException e) {
             throw new RuntimeException(e);
-        }
+        } catch (AddressFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "";
     }
 
     /** Returns the connected input. */

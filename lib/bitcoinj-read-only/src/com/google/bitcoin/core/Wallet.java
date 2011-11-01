@@ -412,8 +412,9 @@ public class Wallet implements Serializable {
      * This method is stateless in the sense that calling it twice with the same inputs will result in two
      * Transaction objects which are equal. The wallet is not updated to track its pending status or to mark the
      * coins as spent until confirmSend is called on the result.
+     * @throws AddressFormatException 
      */
-    synchronized Transaction createSend(Address address,  BigInteger nanocoins) {
+    synchronized Transaction createSend(Address address,  BigInteger nanocoins) throws AddressFormatException {
         // For now let's just pick the first key in our keychain. In future we might want to do something else to
         // give the user better privacy here, eg in incognito mode.
         assert keychain.size() > 0 : "Can't send value without an address to use for receiving change";
@@ -427,8 +428,9 @@ public class Wallet implements Serializable {
      * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws IOException if there was a problem broadcasting the transaction
+     * @throws AddressFormatException 
      */
-    public synchronized Transaction sendCoins(Peer peer, Address to, BigInteger nanocoins) throws IOException {
+    public synchronized Transaction sendCoins(Peer peer, Address to, BigInteger nanocoins) throws IOException, AddressFormatException {
         Transaction tx = createSend(to, nanocoins);
         if (tx == null)   // Not enough money! :-(
             return null;
@@ -617,7 +619,12 @@ public class Wallet implements Serializable {
         builder.append("\nKeys:\n");
         for (ECKey key : keychain) {
             builder.append("  addr:");
-            builder.append(key.toAddress(params));
+            try {
+				builder.append(key.toAddress(params));
+			} catch (AddressFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             builder.append(" ");
             builder.append(key.toString());
             builder.append("\n");

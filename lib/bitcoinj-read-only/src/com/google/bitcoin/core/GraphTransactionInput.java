@@ -69,26 +69,26 @@ public class GraphTransactionInput extends TransactionInput implements
 		node=n;
 		
 		// outpoint is lazy loaded by the outpoint() method, most of the time we don't need it 
-		
-		value=BigInteger.valueOf((Long) node.getProperty("value"));
-		// sequence=(Long) node.getProperty("sequence"); #never use this
-		coinbase=(Boolean) node.hasProperty("coinbase");
-		// scriptBytes=(byte[]) node.getProperty("scriptBytes"); lazy load script bytes instead
-		if(node.hasProperty("index")){
-			index=(Integer) node.getProperty("index");
+		if(node.hasProperty("value")){
+			value=BigInteger.valueOf((Long) node.getProperty("value"));
 		}
 		else{
-			index=0;
+			value=BigInteger.ZERO;
 		}
+		coinbase=node.equals(GraphWallet.coinbaseWallet(n.getGraphDatabase()).node());
 		
 	}
 	
 	public GraphAddress address(){
-			Relationship r=node.getSingleRelationship(GraphRelationships.FROM_ADDRESS, Direction.OUTGOING);
+			Relationship r=node.getSingleRelationship(GraphRelationships.TO_ADDRESS, Direction.OUTGOING);
 			if(r==null){
 				return null;
 			}
-			return new GraphAddress(r.getEndNode());
+			try {
+				return new GraphAddress(r.getEndNode());
+			} catch (AddressFormatException e) {
+				return null;
+			}
 	}
 	
 	
@@ -123,15 +123,6 @@ public class GraphTransactionInput extends TransactionInput implements
 	public void save(GraphDatabaseService graph) {
 		IndexManager index=graph.index();
 		Index<Node> transactionIndex=index.forNodes("transactions");
-		if(node==null){
-			node=graph.createNode();
-		}
-		// node.setProperty("sequence", sequence);
-		if(isCoinBase()){
-			node.setProperty("coinbase", isCoinBase());
-		}
-		// node.setProperty("scriptBytes", scriptBytes);
-		
 		if(!isCoinBase()){
 			Node transactionNode=GraphTransaction.findTransactionNode(graph, Utils.bytesToHexString(outpoint.hash));
 			if(transactionNode==null){
@@ -141,9 +132,10 @@ public class GraphTransactionInput extends TransactionInput implements
 			Node previousOutpoint = null;
 			int index_i=((int) (outpoint.index));
 			for(Relationship r : i){
-				Node e=r.getEndNode();
-				boolean hasIndex=e.hasProperty("index");
-				if((index_i==0 && !hasIndex) || (index_i!=0 && hasIndex && e.getProperty("index").equals(index_i))){
+				
+				boolean hasIndex=r.hasProperty("index");
+				if((index_i==0 && !hasIndex) || (index_i!=0 && hasIndex && r.getProperty("index").equals(index_i))){
+					Node e=r.getEndNode();
 					previousOutpoint=e;
 					break;
 				}
@@ -151,19 +143,10 @@ public class GraphTransactionInput extends TransactionInput implements
 			if(previousOutpoint==null){
 				throw new RuntimeException("Can't find output index  when looking for outpoint - "+Utils.bytesToHexString(outpoint.hash)+" : "+outpoint.index);
 			}
-			node.createRelationshipTo(previousOutpoint, GraphRelationships.PREV_OUTPUT);
-			node.setProperty("value",(Long) previousOutpoint.getProperty("value"));
-			Relationship r=previousOutpoint.getSingleRelationship(GraphRelationships.TO_ADDRESS, Direction.OUTGOING);
-			if(r!=null){
-				Node addr=r.getEndNode();
-				node.createRelationshipTo(addr, GraphRelationships.FROM_ADDRESS);
-			}
+			node=previousOutpoint;
 		}
 		else{
-			node.setProperty("value",coinbaseValue.longValue());
-		}
-		if(this.index!=0){
-			node.setProperty("index",this.index);
+			node=GraphWallet.coinbaseWallet(graph).node();
 		}
 	}
 

@@ -1,11 +1,13 @@
 package net.dirtyfilthy.Bitten;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
 import com.google.bitcoin.core.Accountable;
+import com.google.bitcoin.core.GraphTransaction;
 
 public class TransactionTreeTableModel extends DefaultTreeTableModel {
 
@@ -49,7 +51,7 @@ public class TransactionTreeTableModel extends DefaultTreeTableModel {
 		int i=0;
 		for(i=0;i<count;i++){
 			TransactionTreeNode t=(TransactionTreeNode) this.getRoot().getChildAt(i);
-			if(target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>=0){
+			if(target!=null && target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>=0){
 				System.out.println("setting value to "+b);
 				t.setValueAt(b,6);
 			}
@@ -57,12 +59,16 @@ public class TransactionTreeTableModel extends DefaultTreeTableModel {
 		
 	}
 	
+	public ArrayList<GraphTransaction> transactions(){
+		return ((RootTransactionTreeNode) this.getRoot()).list;
+	}
+	
 	public void setOutgoingVisible(Accountable target, boolean b) {
 		int count=this.getRoot().getChildCount();
 		int i=0;
 		for(i=0;i<count;i++){
 			TransactionTreeNode t=(TransactionTreeNode) this.getRoot().getChildAt(i);
-			if(target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))<0){
+			if(target==null || target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))<0){
 				System.out.println("setting value to "+b);
 				t.setValueAt(b,6);
 			}

@@ -1,6 +1,8 @@
 package net.dirtyfilthy.Bitten;
 
+import java.awt.Component;
 import java.awt.LayoutManager;
+import java.util.HashMap;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -8,6 +10,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import com.google.bitcoin.core.GraphBlockStore;
+import com.google.bitcoin.core.GraphTransactionOutput;
 import com.google.bitcoin.core.GraphWallet;
 
 public class ControlPanel extends JTabbedPane implements TableModelListener {
@@ -15,17 +18,27 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	private GraphBlockStore store;
 	private WalletView view;
 	private VisibilityManager visibilityManager;
-	
+	private HashMap<String,Integer> tabMap;
 	
 	public ControlPanel(GraphBlockStore store, WalletView view) {
 		super();
 		this.store=store;
 		this.view=view;
+		this.view.panel=this;
 		// this.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		this.visibilityManager=new VisibilityManager(view);
 		searchPanel=new SearchPanel(this);
 		searchPanel.setVisible(true);
+		tabMap=new HashMap<String,Integer>();
 		this.addTab("Search", searchPanel);
+		
+	}
+	
+	public int autoViz(){
+		if(searchPanel.autoViz.isSelected()){
+			return new Integer(searchPanel.autoVizNum.getText());
+		}
+		return 0;
 		
 	}
 	
@@ -34,17 +47,44 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	
 	
 	public void searchAddress(String address){
-		AddressSearchResultPanel results=new AddressSearchResultPanel(this,store,address);
-		this.addTab(StringUtils.truncateText(address,8),results);
-		setTabComponentAt(this.getTabCount()-1,new ButtonTabComponent(this));
-		this.setSelectedIndex(this.getTabCount()-1);
+		String full="A"+address;
+		if(!switchToTab(full)){
+			AddressSearchResultPanel results=new AddressSearchResultPanel(this,store,address);
+			this.addSwitchableTab(results,StringUtils.truncateText(address,8),full);
+		}
 	}
 	
+	public void addSwitchableTab(Component c, String title, String full){
+		this.addTab(title,c);
+		int tab=this.getTabCount()-1;
+		setTabComponentAt(tab,new ButtonTabComponent(this));
+		this.setSelectedIndex(tab);
+		tabMap.put(full,tab);
+	}
+	
+	public boolean switchToTab(String full){
+		if(tabMap.containsKey(full)){
+			this.setSelectedIndex(tabMap.get(full));
+			return true;
+		}
+		return false;
+	}
+	
+	
 	public void showWallet(GraphWallet w){
-		WalletSearchResultPanel results=new WalletSearchResultPanel(this,w);
-		this.addTab(StringUtils.truncateText(w.label(),8),results);
-		setTabComponentAt(this.getTabCount()-1,new ButtonTabComponent(this));
-		this.setSelectedIndex(this.getTabCount()-1);
+		String full="W"+w.node().getId();
+		if(!switchToTab(full)){
+			WalletSearchResultPanel results=new WalletSearchResultPanel(this,w);
+			addSwitchableTab(results,StringUtils.truncateText(w.label(),8),full);
+		}
+	}
+	
+	public void searchTainted(GraphTransactionOutput o){
+		String full="T"+o.node().getId();
+		if(!switchToTab(full)){
+			TaintSearchResultPanel results=new TaintSearchResultPanel(this,o,7);
+			addSwitchableTab(results,StringUtils.truncateText("Tainted",8),full);
+		}
 	}
 
 	@Override
