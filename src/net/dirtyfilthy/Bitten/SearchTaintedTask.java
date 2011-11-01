@@ -5,21 +5,24 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingWorker;
 
-import com.google.bitcoin.core.GraphAddress;
 import com.google.bitcoin.core.GraphTransaction;
+import com.google.bitcoin.core.GraphTransactionOutput;
 import com.google.bitcoin.core.GraphWallet;
 
-public class SearchWalletTask extends SwingWorker<ArrayList<GraphTransaction>, Object> {
-	
-	private GraphWallet wallet;
-	
-	SearchWalletTask(GraphWallet w){
-		wallet=w;
+public class SearchTaintedTask extends
+		SwingWorker<ArrayList<GraphTransaction>, Object> {
+
+	private GraphTransactionOutput output;
+	private int depth;
+
+	SearchTaintedTask(GraphTransactionOutput o, int depth){
+		this.output=o;
+		this.depth=depth;
 	}
 	
 	@Override
 	protected ArrayList<GraphTransaction> doInBackground() throws Exception {
-		return wallet.transactions(true);
+		return output.followTainted(depth);
 	}
 	
 
@@ -34,5 +37,6 @@ public class SearchWalletTask extends SwingWorker<ArrayList<GraphTransaction>, O
 			e.printStackTrace();
 		}
 	}
+
 
 }

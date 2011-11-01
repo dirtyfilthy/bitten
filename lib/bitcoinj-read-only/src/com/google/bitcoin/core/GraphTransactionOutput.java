@@ -1,6 +1,8 @@
 package com.google.bitcoin.core;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -77,22 +79,51 @@ public class GraphTransactionOutput extends TransactionOutput implements
 		if(r==null){
 			return null;
 		}
-		return new GraphAddress(r.getEndNode());
+		try {
+			return new GraphAddress(r.getEndNode());
+		} catch (AddressFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 }
 	
 
-	@Override
+
+	
+	public GraphTransaction asInput(){
+		Relationship r=node().getSingleRelationship(GraphRelationships.TRANSACTION_INPUT,Direction.INCOMING);
+		if(r==null){
+			return null;
+		}
+		return new GraphTransaction(r.getStartNode());
+	}
+	
+	public ArrayList<GraphTransaction> followTainted(int depth){
+		System.out.println("following tainted depth "+depth);
+		ArrayList<GraphTransaction> list=new ArrayList<GraphTransaction>();
+		GraphTransaction inp=asInput();
+		if(inp!=null){
+			list.add(inp);
+		}
+		if(depth<=0 || inp==null){
+			return list;
+		}
+		for(GraphTransactionOutput o2 : inp.outputs){
+			list.addAll(o2.followTainted(depth-1));
+		}
+		Collections.sort(list, Timeable.TIME_ORDER);
+		return list;
+	}
+	
 	public void save(GraphDatabaseService graph) {
 		if(node==null){
 			node=graph.createNode();
 		}
 		node.setProperty("value",value.longValue());
-		// node.setProperty("scriptBytes",scriptBytes);
-		if(this.index!=0){
-			node.setProperty("index",this.index);
-		}
 		try {
 			GraphAddress a=GraphAddress.findOrCreateAddress(graph, params, getToAddress().toString());
+			
 			node.createRelationshipTo(a.node(), GraphRelationships.TO_ADDRESS);
 		} catch (AddressFormatException e) {
 			// TODO Auto-generated catch block

@@ -42,11 +42,12 @@ public class Address extends VersionedChecksummedBytes {
      * Construct an address from parameters and the hash160 form. Example:<p>
      *
      * <pre>new Address(NetworkParameters.prodNet(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
+	 * @throws AddressFormatException 
      */
-    public Address(NetworkParameters params,  byte[] hash160) {
+    public Address(NetworkParameters params,  byte[] hash160) throws AddressFormatException {
         super(params.addressHeader, hash160);
         if (hash160.length != 20)  // 160 = 8 * 20
-            throw new RuntimeException("Addresses are 160-bit hashes, so you must provide 20 bytes");
+            throw new AddressFormatException("Addresses are 160-bit hashes, so you must provide 20 bytes");
     }
 
     /**

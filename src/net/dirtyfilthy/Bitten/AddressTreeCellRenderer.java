@@ -25,7 +25,7 @@ public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 	
 
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-		if((value instanceof TransactionTreeNode) && (value != null) && (target!=null)) {
+		if((value instanceof TransactionTreeNode) && (value != null)) {
 			TransactionTreeNode t=(TransactionTreeNode) value;
 			if(t.icon==null){
 				URL img;
@@ -33,7 +33,7 @@ public class AddressTreeCellRenderer extends DefaultXTreeCellRenderer {
 					img=this.getClass().getResource("/icons/coinbase.png");
 				}
 				else{
-					if(((t.transaction.cachedIsIncoming==null && target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>0)) || (t.transaction.cachedIsIncoming!=null && t.transaction.cachedIsIncoming) ){
+					if(((target!=null && t.transaction.cachedIsIncoming==null && target.incomingAmount(t.transaction).compareTo(target.outgoingAmount(t.transaction))>0)) || (t.transaction.cachedIsIncoming!=null && t.transaction.cachedIsIncoming) ){
 						img=this.getClass().getResource("/icons/incoming.png");
 					}
 					else{

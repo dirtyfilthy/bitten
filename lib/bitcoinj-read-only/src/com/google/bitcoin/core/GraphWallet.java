@@ -28,6 +28,7 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 	};
 	
 	
+	
 	public BigInteger cachedTotalIncoming;
 	
 	public BigInteger cachedTotalOutgoing;
@@ -136,14 +137,19 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 			     GraphRelationships.HAS_ADDRESS, Direction.OUTGOING ).getAllNodes();
 		
 		for(Node n : nodeList){
-			list.add(new GraphAddress(n));
+			try {
+				list.add(new GraphAddress(n));
+			} catch (AddressFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		Collections.sort(list,Nodeable.NODE_ORDER);
 		return list;
 	}
 	
 	public static void processTransaction(GraphTransaction t){
-		long time=t.createdAt;
+		int time=t.createdAt;
 		ArrayList<GraphWallet> wallets=new ArrayList<GraphWallet>();
 		for(GraphTransactionInput i : t.inputs){
 			if(i.isCoinBase() || i.address()==null){
@@ -266,14 +272,22 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 		return t.outgoingAmountForWallet(this);
 	}
 	
-	public ArrayList<GraphTransaction> transactions() {
+	public ArrayList<GraphTransaction> transactions(){
+		return transactions(false);
+	}
+	
+	public ArrayList<GraphTransaction> transactions(boolean precache) {
 		ArrayList<GraphTransaction> list=new ArrayList<GraphTransaction>();
 		HashMap<Node,Boolean> contains=new HashMap<Node,Boolean>();
+		HashMap<Node,Boolean> outWalletMap=new HashMap<Node,Boolean>();
+		HashMap<Node,Boolean> inWalletMap=new HashMap<Node,Boolean>();
 		long incoming=0;
 		long outgoing=0;
 		for(Relationship r : node.getRelationships(Direction.BOTH, GraphRelationships.PAYMENT)){
 			Node n=node().getGraphDatabase().getNodeById((Long) r.getProperty("transaction_id"));
-			GraphTransaction t=new GraphTransaction(n);
+			inWalletMap.put(r.getStartNode(), true);
+			outWalletMap.put(r.getEndNode(), true);
+			GraphTransaction t=new GraphTransaction(n,precache);
 			t.cachedIsIncoming=true;
 			if(!r.getStartNode().equals(r.getEndNode())){
 				long v=(Long) r.getProperty("value");
@@ -294,6 +308,11 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 		cachedTotalIncoming=BigInteger.valueOf(incoming);
 		cachedTotalOutgoing=BigInteger.valueOf(outgoing);
 		Collections.sort(list, Timeable.TIME_ORDER);
+		GraphTransaction first=list.get(0);
+		if(first!=null){
+			first.incomingWallets=inWalletMap.size()-1;
+			first.outgoingWallets=outWalletMap.size()-1;
+		}
 		return list;
 		
 	}

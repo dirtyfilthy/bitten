@@ -6,6 +6,7 @@ import static com.google.bitcoin.core.Utils.reverseBytes;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 import org.neo4j.graphdb.Direction;
@@ -17,11 +18,23 @@ import org.neo4j.graphdb.index.IndexManager;
 
 public class GraphTransaction extends Transaction implements GraphSaveable,
 		Nodeable, Timeable {
+	
+	public final static Comparator<Relationship> R_INDEX_ORDER = new Comparator<Relationship>() {
+        public int compare(Relationship r1, Relationship r2) {
+            Integer i1=(!r1.hasProperty("index") ? 0 : (Integer) r1.getProperty("index"));
+            Integer i2=(!r2.hasProperty("index") ? 0 : (Integer) r2.getProperty("index"));
+        	return i1.compareTo(i2);
+        }
+	};
+	
+	
 
 	private static MapCache<String, Node> cache=new MapCache<String,Node>(2000);
 	private Node node;
 	public int createdAt;
 	public int index;
+	public int outgoingWallets=0;
+	public int incomingWallets=0;
 	public BigInteger coinbaseValue;
 	public ArrayList<GraphTransactionInput> inputs;
 	public ArrayList<GraphTransactionOutput> outputs;
@@ -51,6 +64,36 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		this.createdAt=(Integer) node.getProperty("createdAt");
 		
 	}
+	
+	public ArrayList<GraphWallet> getIncomingWallets(){
+		ArrayList<GraphWallet> w=new ArrayList<GraphWallet>();
+		GraphWallet w2;
+		for(GraphTransactionInput t : inputs){
+			if(t.address()!=null){
+				w2=t.address().wallet();
+				if(!w.contains(w2)){
+					w.add(w2);
+				}
+			}
+		}
+		return w;
+	}
+	
+
+	public ArrayList<GraphWallet> getOutgoingWallets(){
+		ArrayList<GraphWallet> w=new ArrayList<GraphWallet>();
+		GraphWallet w2;
+		for(GraphTransactionOutput t : outputs){
+			if(t.address()!=null){
+				w2=t.address().wallet();
+				if(!w.contains(w2)){
+					w.add(w2);
+				}
+			}
+		}
+		return w;
+	}
+	
 	
 	public static Node findTransactionNode(GraphDatabaseService graph, String hash){
 		if(cache.containsKey(hash)){
@@ -85,12 +128,27 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 			if(i2.isCoinBase()){
 				continue;
 			}
-			if(i2.address().equals(a)){
+			if(i2.address()!=null && i2.address().equals(a)){
 				amount=amount.add(i2.value);
 			}
 		}
 		return amount;
 	}
+	
+	public Relationship paymentFor(GraphTransactionOutput o){
+		GraphWallet src;
+		GraphWallet dst=o.address().wallet();
+		for(Relationship r : dst.node().getRelationships(GraphRelationships.PAYMENT, Direction.INCOMING)){
+			if(((Long) r.getProperty("transaction_id")).equals(node().getId())){
+				return r;
+			}
+		}
+		return null;
+		
+		
+	}
+	
+	
 	
 	public BigInteger incomingAmountForWallet(GraphWallet w){
 		BigInteger amount=BigInteger.ZERO;
@@ -117,11 +175,11 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 
 
 	
-	public GraphTransaction(Node n){
-		super(NetworkParameters.prodNet());
+	private void load(Node n, boolean precache){
 		this.node=n;
-		
-		/* 
+		ArrayList<Relationship> r_inputs=new ArrayList<Relationship>();
+		ArrayList<Relationship> r_outputs=new ArrayList<Relationship>();
+		/*
 		we never use these
 		this.version=(Long) node.getProperty("version");
 		this.lockTime=(Long) node.getProperty("lockTime");
@@ -134,16 +192,44 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		inputs=new ArrayList<GraphTransactionInput>();
 		outputs=new ArrayList<GraphTransactionOutput>();
 		for(Relationship r : node.getRelationships(Direction.OUTGOING, GraphRelationships.TRANSACTION_INPUT)){
-			Node n2=r.getEndNode();
-			inputs.add(new GraphTransactionInput(NetworkParameters.prodNet(),n2));
+			r_inputs.add(r);
 		}
 		for(Relationship r : node.getRelationships(Direction.OUTGOING, GraphRelationships.TRANSACTION_OUTPUT)){
-			Node n2=r.getEndNode();
-			outputs.add(new GraphTransactionOutput(NetworkParameters.prodNet(),n2));
+			r_outputs.add(r);
 		}
-		Collections.sort(inputs, Indexable.INDEX_ORDER);
-		Collections.sort(outputs, Indexable.INDEX_ORDER);
+		Collections.sort(r_inputs,R_INDEX_ORDER);
+		Collections.sort(r_outputs,R_INDEX_ORDER);
+		for(Relationship r : r_inputs){
+			Node n2=r.getEndNode();
+			GraphTransactionInput in=new GraphTransactionInput(NetworkParameters.prodNet(),n2);
+			if(precache){
+				if(in.address()!=null){
+					in.address().wallet();
+				}
+			}
+			inputs.add(in);
+		}
+		for(Relationship r : r_outputs){
+			Node n2=r.getEndNode();
+			GraphTransactionOutput out=new GraphTransactionOutput(NetworkParameters.prodNet(),n2);
+			if(precache){
+				if(out.address()!=null){
+					out.address().wallet();
+				}
+			}
+			outputs.add(out);
+		}
 		
+	}
+	
+	public GraphTransaction(Node n, boolean precache){
+		super(NetworkParameters.prodNet());
+		load(n,precache);
+	}
+	
+	public GraphTransaction(Node n){
+		super(NetworkParameters.prodNet());
+		load(n,false);
 	}
 	
 	public boolean equals(Object o){
@@ -175,18 +261,24 @@ public class GraphTransaction extends Transaction implements GraphSaveable,
 		transactionsIndex.add(node, "hash", this.getHash().toString());
 		int i=0;
 		for(GraphTransactionInput in : inputs){
-			in.coinbaseValue=coinbaseValue;
 			in.index=i;
 			in.save(graph);
+			if(in.node()==null){
+				continue;
+			}
 			Relationship r=node.createRelationshipTo(in.node(), GraphRelationships.TRANSACTION_INPUT);
-			// r.setProperty("index", in.index);
+			if(i!=0){
+				r.setProperty("index", in.index);
+			}
 			i++;
 		}
 		i=0;
 		for(GraphTransactionOutput out : outputs){
-			out.index=i;
 			out.save(graph);
 			Relationship r=node.createRelationshipTo(out.node(), GraphRelationships.TRANSACTION_OUTPUT);
+			if(i!=0){
+				r.setProperty("index", i);
+			}
 			i++;
 		}
 	}

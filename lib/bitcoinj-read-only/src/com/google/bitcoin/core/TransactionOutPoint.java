@@ -22,7 +22,7 @@ import java.io.Serializable;
 
 // TODO: Fold this class into the TransactionInput class. It's not necessary.
 
-/**
+/**  
  * This message is a reference or pointer to an output of a different transaction.
  */
 public class TransactionOutPoint extends Message implements Serializable {

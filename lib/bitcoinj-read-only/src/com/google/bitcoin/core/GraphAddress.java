@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -18,9 +19,9 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	public String label="";
 	public String notes="";
 	private static MapCache<String,GraphAddress> cache=new MapCache<String,GraphAddress>(2000);
+	 
 	
-	
-	public GraphAddress(NetworkParameters params, byte[] hash160) {
+	public GraphAddress(NetworkParameters params, byte[] hash160) throws AddressFormatException {
 		super(params, hash160);
 		// TODO Auto-generated constructor stub
 	}
@@ -32,7 +33,7 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	}
 	
 
-	public GraphAddress(Node a) {
+	public GraphAddress(Node a) throws AddressFormatException {
 		super(NetworkParameters.prodNet(),(byte[]) a.getProperty("hash"));
 		node=a;
 		label="";
@@ -83,25 +84,49 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 	
 	public ArrayList<GraphTransaction> transactions(){
 		ArrayList<GraphTransaction> trans=new ArrayList<GraphTransaction>();
-		for(Relationship r : node.getRelationships(Direction.INCOMING, GraphRelationships.FROM_ADDRESS)){
-			Node n=r.getStartNode();
-			Relationship r2=n.getSingleRelationship(GraphRelationships.TRANSACTION_INPUT, Direction.INCOMING);
-			n=r2.getStartNode();
-			GraphTransaction t=new GraphTransaction(n);
-			if(!trans.contains(t)){
-				trans.add(t);
-			}
-		}
+		HashMap<Node,Boolean> outWalletMap=new HashMap<Node,Boolean>();
+		HashMap<Node,Boolean> inWalletMap=new HashMap<Node,Boolean>();
 		for(Relationship r : node.getRelationships(Direction.INCOMING, GraphRelationships.TO_ADDRESS)){
 			Node n=r.getStartNode();
 			Relationship r2=n.getSingleRelationship(GraphRelationships.TRANSACTION_OUTPUT, Direction.INCOMING);
-			n=r2.getStartNode();
-			GraphTransaction t=new GraphTransaction(n);
+			Node n2=r2.getStartNode();
+		
+			GraphTransaction t=new GraphTransaction(n2);
 			if(!trans.contains(t)){
 				trans.add(t);
+				for(GraphWallet w : t.getIncomingWallets()){
+					inWalletMap.put(w.node(), true);
+				}
+				for(GraphWallet w : t.getOutgoingWallets()){
+					outWalletMap.put(w.node(), true);
+				}
 			}
+			
+			
+			r2=n.getSingleRelationship(GraphRelationships.TRANSACTION_INPUT, Direction.INCOMING);
+			if(r2!=null){
+				n2=r2.getStartNode();
+				t=new GraphTransaction(n2);
+				if(!trans.contains(t)){
+					trans.add(t);
+					for(GraphWallet w : t.getIncomingWallets()){
+						inWalletMap.put(w.node(), true);
+					}
+					for(GraphWallet w : t.getOutgoingWallets()){
+						outWalletMap.put(w.node(), true);
+					}
+				}
+				
+			}
+			
+			
 		}
 		Collections.sort(trans, Timeable.TIME_ORDER);
+		GraphTransaction f=trans.get(0);
+		if(f!=null){
+			f.incomingWallets=inWalletMap.size();
+			f.outgoingWallets=outWalletMap.size();
+		}
 		return trans;
 		
 	}

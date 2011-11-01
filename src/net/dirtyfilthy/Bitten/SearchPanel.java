@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -14,6 +15,8 @@ public class SearchPanel extends JPanel  implements ActionListener {
 	ControlPanel controlPanel;
 	
 	JTextField addressTextField;
+	public JCheckBox autoViz;
+	public JTextField autoVizNum;
 	
 	public SearchPanel(ControlPanel cp) {
 		super();
@@ -55,6 +58,17 @@ public class SearchPanel extends JPanel  implements ActionListener {
 		 b1.addActionListener(this);
 		 addressSearchPanel.add(b1);
 		 this.add(addressSearchPanel);
+		 JPanel vizPanel=new JPanel();
+		 autoViz=new JCheckBox("autoViz",true);
+		 autoVizNum=new JTextField("5");
+		 
+		 vizPanel.add(autoViz);
+		 vizPanel.add(autoVizNum);
+		 this.add(vizPanel);
+		 
+		 
+		 
+		 
 	}
 
 }
