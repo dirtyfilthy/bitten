@@ -52,6 +52,9 @@ import prefuse.util.ColorLib;
 import prefuse.util.FontLib;
 import prefuse.util.PrefuseLib;
 import prefuse.util.force.DragForce;
+import prefuse.util.force.ForceSimulator;
+import prefuse.util.force.NBodyForce;
+import prefuse.util.force.SpringForce;
 import prefuse.util.ui.JForcePanel;
 import prefuse.visual.DecoratorItem;
 import prefuse.visual.EdgeItem;
@@ -136,6 +139,7 @@ public class WalletView extends Display {
 		walletNodeTable.addColumn("id", long.class);
 		walletNodeTable.addColumn("label", String.class);
 		walletNodeTable.addColumn("coinbase", boolean.class);
+		walletNodeTable.addColumn("labelled", boolean.class);
 		walletEdgeTable.addColumn("btc", long.class);
 	
 		
@@ -173,8 +177,14 @@ public class WalletView extends Display {
 		viz.addDecorators("edgeDeco", "graph.edges",DECORATOR_SCHEMA);
 		ActionList layout = new ActionList(Activity.INFINITY);
 		forceDirected = new ForceDirectedLayout("graph");
+		ForceSimulator fs=new ForceSimulator();
+		fs.addForce(new NBodyForce(-4.0f, -1, 0.9f));
+		fs.addForce(new SpringForce(SpringForce.DEFAULT_SPRING_COEFF,60.0f));
+		fs.addForce(new DragForce(0.02f));
 		// f.getForceSimulator().setIntegrator(new EulerIntegrator());
-		forceDirected.getForceSimulator().addForce(new DragForce((float) 0.01));
+		// forceDirected.getForceSimulator().addForce(new DragForce((float) 0.01));
+		// forceDirected.getForceSimulator().
+		forceDirected.setForceSimulator(fs);
 		layout.add(forceDirected);
 		
 		// layout.add(new NodeLinkTreeLayout("graph"));
@@ -184,6 +194,7 @@ public class WalletView extends Display {
 				ColorLib.rgb(40,40,40));
 		ColorAction text = new ColorAction("graph.nodes", VisualItem.TEXTCOLOR,
 			ColorLib.gray(0));
+		fill.add("labelled", ColorLib.rgb(255,0,0));
 		// use light grey for edges
 		ColorAction stroke = new ColorAction("graph.nodes",
 				VisualItem.STROKECOLOR, ColorLib.rgb(40, 230, 40));
@@ -272,6 +283,7 @@ public class WalletView extends Display {
 		else{
 			n.setBoolean(2,false);
 		}
+		n.setBoolean(3,w.isLabelled());
 		return n;
 	}
 	
@@ -297,8 +309,7 @@ public class WalletView extends Display {
 		if (!sourceNode.edges().hasNext()) {
 			graph.removeNode(sourceNode);
 		}
-		targetNode = graph.getNodeFromKey(target.node().getId());
-		if (targetNode!=null && !targetNode.edges().hasNext()) {
+		if (!targetNode.edges().hasNext()) {
 			graph.removeNode(targetNode);
 		}
 

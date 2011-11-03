@@ -70,6 +70,10 @@ public class GraphWallet implements Noteable, Nodeable, Accountable {
 		
 	}
 	
+	public boolean isLabelled(){
+		return !label.equals("");
+	}
+	
 	public GraphWallet(Node n) {
 		node=n;
 		notes="";

@@ -1,7 +1,13 @@
 package com.google.bitcoin.core;
 
+import java.io.FileInputStream;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
+import org.ibex.nestedvm.util.Seekable.InputStream;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
@@ -22,8 +28,33 @@ public class GraphBlockStore implements BlockStore {
 	
 	
 	public GraphBlockStore(NetworkParameters n, String path){ 
-		Map<String, String> config = EmbeddedGraphDatabase.loadConfigurations("/home/alhazred/neo4j.properties" );
-		graph = new EmbeddedGraphDatabase( path,config );
+		         Properties props = new Properties();
+		         try
+		         {
+		             java.io.InputStream stream = this.getClass().getResourceAsStream("/neo4j.properties");
+		             try
+		             {
+		                 props.load( stream );
+		             }
+		             finally
+		             {
+		                 stream.close();
+		             }
+		         }
+		         catch ( Exception e )
+		         {
+		             throw new IllegalArgumentException( "Unable to load");
+		         }
+		         Set<Entry<Object,Object>> entries = props.entrySet();
+		         Map<String,String> stringProps = new HashMap<String,String>();
+		         for ( Entry<Object,Object> entry : entries )
+		         {
+		             String key = (String) entry.getKey();
+		             String value = (String) entry.getValue();
+		             stringProps.put( key, value );
+		         }
+		
+		graph = new EmbeddedGraphDatabase( path,stringProps );
 		indexer = graph.index();
 		params = n;
 		

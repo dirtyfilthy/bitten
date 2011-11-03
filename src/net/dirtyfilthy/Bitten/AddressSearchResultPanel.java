@@ -17,7 +17,7 @@ public class AddressSearchResultPanel extends JPanel implements Closeable {
 	
 	AddressSearchResultPanel(ControlPanel p, GraphBlockStore store,String address){
 		try {
-			GraphAddress a=store.findOrCreateAddress(address);
+			GraphAddress a=store.findOrCreateAddress(address.trim());
 			SearchAddressTask task=new SearchAddressTask(a);
 			editor=new NoteEditorPanel(a);
 			this.add(editor);

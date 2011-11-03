@@ -58,7 +58,8 @@ public class Bitten {
 
 	
 	public GraphBlockStore getBlockStore(){
-		String f="/home/alhazred/bitten.graph";
+		String f= ClassLoader.getSystemClassLoader().getResource(".").getPath()+"/bitten.graph";
+		System.out.println("blockstore="+f);
 		return new GraphBlockStore(Bitten.networkParameters,f);
 	}
 	
