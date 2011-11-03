@@ -3,6 +3,8 @@ package net.dirtyfilthy.Bitten;
 import java.awt.Component;
 import java.awt.LayoutManager;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -47,7 +49,7 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 	
 	
 	public void searchAddress(String address){
-		String full="A"+address;
+		String full="A"+address.trim();
 		if(!switchToTab(full)){
 			AddressSearchResultPanel results=new AddressSearchResultPanel(this,store,address);
 			this.addSwitchableTab(results,StringUtils.truncateText(address,8),full);
@@ -70,6 +72,26 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		return false;
 	}
 	
+	public void remove(int i){
+		if (i != -1) {
+        	Component c=getComponentAt(i);
+        	if(c instanceof Closeable){
+        		((Closeable) c).close();
+        	}
+        	Iterator<Entry<String,Integer>> it = tabMap.entrySet().iterator();
+        	while(it.hasNext()){
+        		Entry<String,Integer> e=it.next();
+        		if(e.getValue()==i){
+        			it.remove();
+        		}
+        		if(e.getValue()>i){
+        			e.setValue(i-1);
+        		}
+        	}
+            super.remove(i);
+        }
+	}
+	
 	
 	public void showWallet(GraphWallet w){
 		String full="W"+w.node().getId();
@@ -79,10 +101,10 @@ public class ControlPanel extends JTabbedPane implements TableModelListener {
 		}
 	}
 	
-	public void searchTainted(GraphTransactionOutput o){
+	public void searchTainted(GraphTransactionOutput o, Integer steps){
 		String full="T"+o.node().getId();
 		if(!switchToTab(full)){
-			TaintSearchResultPanel results=new TaintSearchResultPanel(this,o,7);
+			TaintSearchResultPanel results=new TaintSearchResultPanel(this,o,steps);
 			addSwitchableTab(results,StringUtils.truncateText("Tainted",8),full);
 		}
 	}
