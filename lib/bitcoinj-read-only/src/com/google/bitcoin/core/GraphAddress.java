@@ -129,12 +129,12 @@ public class GraphAddress extends Address implements Noteable, Nodeable, Account
 		}
 		return trans;
 		
-	}
+	} 
 	
 	public GraphWallet wallet(){
 		Relationship r=node.getSingleRelationship(GraphRelationships.HAS_ADDRESS, Direction.INCOMING);
 		if(r==null){
-			return null;
+			return new GraphWallet(r.getStartNode());
 		}
 		return new GraphWallet(r.getStartNode());
 	}

@@ -44,10 +44,19 @@ public class Bitten {
 		} catch(Exception ex) {
 		    ex.printStackTrace();
 		}
+		String v;
+		if(args.length==0){
+			v = System.getProperty("user.home")+"/bitten.graph";
+		}else{
+			v=args[0];
+		}
+		final String path=v;
+		
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Bitten window = new Bitten();
+					
+					Bitten window = new Bitten(path);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -55,20 +64,47 @@ public class Bitten {
 			}
 		});
 	}
+	
+	 private String getJarFolder() {
+		 try{
+		    // get name and path
+		    String name = getClass().getName().replace('.', '/');
+		    name = getClass().getResource("/" + name + ".class").toString();
+		    // remove junk
+		    name = name.substring(0, name.indexOf(".jar"));
+		    name = name.substring(name.lastIndexOf(':')-1, name.lastIndexOf('/')+1).replace('%', ' ');
+		    // remove escape characters
+		    String s = "";
+		    for (int k=2; k<name.length(); k++) {
+		      s += name.charAt(k);
+		      if (name.charAt(k) == ' ') k += 2;
+		    }
+		    // replace '/' with system separator char
+		    return s.replace('/', File.separatorChar);
+		  }
+		 catch(java.lang.StringIndexOutOfBoundsException e){
+			 try{
+			 return new File(getClass().getResource(".").getPath()).getParentFile().getParent();
+			 }
+			 catch(Exception e2){
+				 e2.printStackTrace();
+			 }
+	   }
+	return null;
+	 }
+	 
 
 	
-	public GraphBlockStore getBlockStore(){
-		String f= ClassLoader.getSystemClassLoader().getResource(".").getPath()+"/bitten.graph";
-		System.out.println("blockstore="+f);
-		return new GraphBlockStore(Bitten.networkParameters,f);
+	public GraphBlockStore getBlockStore(String storePath){
+		return new GraphBlockStore(Bitten.networkParameters,storePath);
 	}
 	
 	/**
 	 * Create the application.
 	 * @throws SQLException 
 	 */
-	public Bitten() throws SQLException {
-		initialize();
+	public Bitten(String storePath) throws SQLException {
+		initialize(storePath);
 		
 	}
 
@@ -76,7 +112,7 @@ public class Bitten {
 	 * Initialize the contents of the frame.
 	 * @throws SQLException 
 	 */
-	private void initialize() throws SQLException {
+	private void initialize(String storePath) throws SQLException {
 		
 		frame = new JFrame();
 		frame.setExtendedState(Frame.MAXIMIZED_BOTH);  
@@ -87,7 +123,7 @@ public class Bitten {
 		// we don't care about the wallet
 		
 		Wallet wallet = new Wallet(Bitten.networkParameters);
-		GraphBlockStore store = getBlockStore();
+		GraphBlockStore store = getBlockStore(storePath);
 		blockChain=new BlockChain(Bitten.networkParameters,wallet, store);
 		 lblStatusBar = new StatusBar(blockChain);
 		final WalletView view=new WalletView();
@@ -130,7 +166,7 @@ public class Bitten {
 	 //   new Thread(r).start();
 		// frame.getContentPane().add(t, BorderLayout.CENTER);
 		downloader=new BlockChainDownloader(blockChain);
-	    downloader.start();
+	    // downloader.start();
 	}
 
 }
