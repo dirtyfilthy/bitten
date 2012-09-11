@@ -30,7 +30,7 @@ public class BlockChainDownloader extends Thread {
 
 	public void run(){
 	
-		PeerDiscovery peerDiscovery=new SeedPeers(NetworkParameters.prodNet());
+		PeerDiscovery peerDiscovery=new DnsDiscovery(NetworkParameters.prodNet());
 		try {
 			while(true){
 			InetSocketAddress addresses[]=peerDiscovery.getPeers();

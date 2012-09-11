@@ -65,17 +65,19 @@ public class NetworkConnection {
             throws IOException, ProtocolException {
         this.params = params;
         this.remoteIp = remoteIp;
-
+ 
 
         InetSocketAddress address = new InetSocketAddress(remoteIp, params.port);
+        System.out.println("before connect");
         socket = new Socket();
+      
         socket.connect(address, connectTimeout);
-        
+        System.out.println("after connect");
         out = socket.getOutputStream();
         in = new BufferedInputStream(socket.getInputStream());
 
         // the version message never uses checksumming. Update checkumming property after version is read.
-        this.serializer = new GraphBitcoinSerializer(params, false);
+        this.serializer = new GraphBitcoinSerializer(params, true);
 
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.
