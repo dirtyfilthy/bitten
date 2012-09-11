@@ -34,7 +34,7 @@ public class NetworkParameters implements Serializable {
     /**
      * The protocol version this library implements. A value of 31800 means 0.3.18.00.
      */
-    public static final int PROTOCOL_VERSION = 31800;
+    public static final int PROTOCOL_VERSION = 60001;
 
     // TODO: Seed nodes and checkpoint values should be here as well.
 
